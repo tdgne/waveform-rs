@@ -1,0 +1,10 @@
+[package]
+name = "waveform"
+version = "0.0.1"
+authors = ["tdgne"]
+
+[dependencies]
+
+[dev-dependencies]
+gtk = "0.1.3"
+gdk-pixbuf = "0.1.3"

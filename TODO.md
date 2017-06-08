@@ -1,0 +1,1 @@
+ - [ ] Switching between silhouette and polylines
