@@ -1,8 +1,7 @@
 extern crate waveform;
 
 use waveform::*;
-
-use std::time::{Duration, SystemTime};
+use std::time::SystemTime;
 
 fn main() {
     let mut samples: Vec<f64> = Vec::new();
@@ -13,11 +12,11 @@ fn main() {
             );
     }
 
-    let config = WaveformConfig{amp_max: 1f64, amp_min: -1f64, background: Color{r:0,g:0,b:0,a:255}, foreground: Color{r:0,g:0,b:0,a:0}};
+    let config = WaveformConfig{amp_max: 1f64, amp_min: -1f64, background: Color::RGBA{r:0,g:0,b:0,a:255}, foreground: Color::RGBA{r:0,g:0,b:0,a:0}};
 
-    // Cached version
+    // Lightweight version
     {
-        let mut wfg = CachedWaveformGenerator::new(SampleSequence{data: samples.clone(), sample_rate: 44100f64, range: TimeRange::Seconds(0f64, 1f64)}, config.clone());
+        let mut wfg = LightweightWaveformGenerator::new(&SampleSequence{data: samples.clone(), sample_rate: 44100f64, range: TimeRange::Seconds(0f64, 1f64)}, 10, config.clone()).unwrap();
         let now = SystemTime::now();
         for _ in 0..100 {
             wfg.generate_vec(TimeRange::Seconds(0f64, 1f64), (1000, 100));

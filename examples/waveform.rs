@@ -27,9 +27,9 @@ fn main() {
     }
 
     let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64, range: TimeRange::Seconds(0f64, 1f64)};
-    let config = WaveformConfig{foreground: Color{r:0,g:0,b:0,a:255}, background: Color{r:0,g:0,b:0,a:0}, amp_min: -1f64, amp_max: 1f64};
-    let mut wfg = CachedWaveformGenerator::new(ss, config);
-    let vec = wfg.generate_vec(TimeRange::Seconds(0f64, 1f64), (800, 100)).unwrap();
+    let config = WaveformConfig{foreground: Color::RGBA{r:0,g:0,b:0,a:255}, background: Color::RGBA{r:0,g:0,b:0,a:0}, amp_min: -1f64, amp_max: 1f64};
+    let mut wfg = LightweightWaveformGenerator::new(&ss, 10, config).unwrap();
+    let vec = wfg.generate_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100)).unwrap();
     let pixbuf = Pixbuf::new_from_vec(vec, 0, true, 8, 800, 100, 800*4);
     let image = Image::new_from_pixbuf(Some(&pixbuf));
     window.add(&image);
