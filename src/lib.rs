@@ -43,7 +43,6 @@ impl<T> Sample for T where T: PartialOrd + Into<f64> + Copy + Zero {}
 pub struct SampleSequence<T: Sample> {
     pub data: Vec<T>,
     pub sample_rate: f64,
-    pub range: TimeRange,
 }
 
 struct MinMaxPair<T: Sample> {

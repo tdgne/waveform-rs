@@ -16,7 +16,7 @@ fn main() {
 
     // Lightweight version
     {
-        let mut wfg = LightweightWaveformGenerator::new(&SampleSequence{data: samples.clone(), sample_rate: 44100f64, range: TimeRange::Seconds(0f64, 1f64)}, 10, config.clone()).unwrap();
+        let mut wfg = LightweightWaveformGenerator::new(&SampleSequence{data: samples.clone(), sample_rate: 44100f64}, 10, config.clone()).unwrap();
         let now = SystemTime::now();
         for _ in 0..100 {
             wfg.generate_vec(TimeRange::Seconds(0f64, 1f64), (1000, 100));
