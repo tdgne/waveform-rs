@@ -1,29 +1,6 @@
-use std::ops::Range;
 use std::collections::HashMap;
 
-pub struct SimpleWaveformGenerator {
-    pub sample_rate: f64,
-    pub amp_min: f64,
-    pub amp_max: f64,
-    pub foreground: Color,
-    pub background: Color,
-}
-
-pub struct CachedWaveformGenerator {
-    samples: Vec<f64>,
-    sample_rate: f64,
-    amp_min: f64,
-    amp_max: f64,
-    minmax: HashMap<usize, Vec<MinMaxPair>>, // key: samples_per_pixel, val: pairs of min/max values
-    foreground: Color,
-    background: Color,
-}
-
-struct MinMaxPair {
-    min: f64,
-    max: f64,
-}
-
+#[derive(Clone)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -31,18 +8,62 @@ pub struct Color {
     pub a: u8,
 }
 
-impl CachedWaveformGenerator {
-    pub fn new(samples: Vec<f64>, sample_rate: f64, amp_min: f64, amp_max: f64, foreground: Color, background: Color) -> Self {
-        Self{samples: samples, sample_rate: sample_rate, amp_min: amp_min, amp_max: amp_max,
-                        minmax: HashMap::new(), background: background, foreground: foreground}
+#[derive(Clone)]
+pub struct WaveformConfig {
+    pub amp_min: f64,
+    pub amp_max: f64,
+    pub foreground: Color,
+    pub background: Color,
+}
+
+#[derive(Clone)]
+pub struct SimpleWaveformGenerator {
+    pub sample_rate: f64,
+    pub config: WaveformConfig,
+}
+
+
+pub enum TimeRange {
+    Seconds(f64, f64),
+    Samples(usize, usize),
+}
+
+pub trait Sample: PartialOrd + Into<f64> + Copy {}
+impl<T> Sample for T where T: PartialOrd + Into<f64> + Copy {}
+
+pub struct SampleSequence<T: Sample> {
+    pub data: Vec<T>,
+    pub sample_rate: f64,
+    pub range: TimeRange,
+}
+
+struct MinMaxPair<T: Sample> {
+    min: T,
+    max: T,
+}
+
+struct MinMaxPairSequence<T: Sample> {
+    data: Vec<MinMaxPair<T>>,
+    range: TimeRange,
+}
+
+pub struct CachedWaveformGenerator<T: Sample> {
+    pub samples: SampleSequence<T>,
+    pub config: WaveformConfig,
+    minmax: HashMap<usize, MinMaxPairSequence<T>>, // key: samples_per_pixel, val: pairs of min/max values
+}
+
+impl<T: Sample> CachedWaveformGenerator<T> {
+    pub fn new(samples: SampleSequence<T>, config: WaveformConfig) -> CachedWaveformGenerator<T> {
+        Self{samples: samples, minmax: HashMap::new(), config: config}
     }
-    pub fn generate_vec(&mut self, range: (f64, f64), shape: (usize, usize)) -> Option<Vec<u8>> {
+    pub fn generate_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
         let (w, h) = shape;
         if w == 0 || h == 0 {
             return None;
         }
         let mut img = vec![0u8; w * h * 4];
-        let nb_samples = self.samples.len();
+        let nb_samples = self.samples.data.len();
         let samples_per_pixel = nb_samples / w;
 
         let minmax_cache_exists = match self.minmax.get(&samples_per_pixel) {
@@ -51,18 +72,19 @@ impl CachedWaveformGenerator {
         };
 
         if !minmax_cache_exists {
-            self.minmax.insert(samples_per_pixel, Vec::with_capacity(w));
-            let minmaxvec = self.minmax.get_mut(&samples_per_pixel).unwrap();
+            self.minmax.insert(samples_per_pixel,
+                               MinMaxPairSequence{data: Vec::with_capacity(w), range: range});
+            let ref mut minmaxvec = self.minmax.get_mut(&samples_per_pixel).unwrap();
             for x in 0..w {
-                let mut min = self.samples[x*samples_per_pixel + 0];
-                let mut max = self.samples[x*samples_per_pixel + 0];
+                let mut min = self.samples.data[x*samples_per_pixel + 0];
+                let mut max = self.samples.data[x*samples_per_pixel + 0];
                 if samples_per_pixel > 1 {
                     for i in 1..samples_per_pixel {
                         let idx = x * samples_per_pixel + i;
                         if idx >= nb_samples {
                             break;
                         }
-                        let s = self.samples[idx];
+                        let s = self.samples.data[idx];
                         if s > max {
                             max = s;
                         }else if s < min {
@@ -70,25 +92,25 @@ impl CachedWaveformGenerator {
                         }
                     }
                 }
-                minmaxvec.push(MinMaxPair{min: min, max: max});
+                minmaxvec.data.push(MinMaxPair{min: min, max: max});
             }
         }
 
-        let cache = self.minmax.get(&samples_per_pixel).unwrap();
+        let ref cache = self.minmax.get(&samples_per_pixel).unwrap().data;
         for x in 0..w {
             let MinMaxPair{min: min, max: max} = cache[x];
             for y in 0..h {
-                let y_translated = ((h - y) as f64) / (h as f64) * (self.amp_max - self.amp_min) + self.amp_min;
-                if y_translated < min || y_translated > max {
-                    img[4*(y*w+x) + 0] = self.background.r;
-                    img[4*(y*w+x) + 1] = self.background.g;
-                    img[4*(y*w+x) + 2] = self.background.b;
-                    img[4*(y*w+x) + 3] = self.background.a;
+                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
+                if y_translated < min.into() || y_translated > max.into() {
+                    img[4*(y*w+x) + 0] = self.config.background.r;
+                    img[4*(y*w+x) + 1] = self.config.background.g;
+                    img[4*(y*w+x) + 2] = self.config.background.b;
+                    img[4*(y*w+x) + 3] = self.config.background.a;
                 }else{
-                    img[4*(y*w+x) + 0] = self.foreground.r;
-                    img[4*(y*w+x) + 1] = self.foreground.g;
-                    img[4*(y*w+x) + 2] = self.foreground.b;
-                    img[4*(y*w+x) + 3] = self.foreground.a;
+                    img[4*(y*w+x) + 0] = self.config.foreground.r;
+                    img[4*(y*w+x) + 1] = self.config.foreground.g;
+                    img[4*(y*w+x) + 2] = self.config.foreground.b;
+                    img[4*(y*w+x) + 3] = self.config.foreground.a;
                 }
             }
         }
@@ -125,17 +147,17 @@ impl SimpleWaveformGenerator {
                 }
             }
             for y in 0..h {
-                let y_translated = ((h - y) as f64) / (h as f64) * (self.amp_max - self.amp_min) + self.amp_min;
+                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
                 if y_translated < min || y_translated > max {
-                    img[4*(y*w+x) + 0] = self.background.r;
-                    img[4*(y*w+x) + 1] = self.background.g;
-                    img[4*(y*w+x) + 2] = self.background.b;
-                    img[4*(y*w+x) + 3] = self.background.a;
+                    img[4*(y*w+x) + 0] = self.config.background.r;
+                    img[4*(y*w+x) + 1] = self.config.background.g;
+                    img[4*(y*w+x) + 2] = self.config.background.b;
+                    img[4*(y*w+x) + 3] = self.config.background.a;
                 }else{
-                    img[4*(y*w+x) + 0] = self.foreground.r;
-                    img[4*(y*w+x) + 1] = self.foreground.g;
-                    img[4*(y*w+x) + 2] = self.foreground.b;
-                    img[4*(y*w+x) + 3] = self.foreground.a;
+                    img[4*(y*w+x) + 0] = self.config.foreground.r;
+                    img[4*(y*w+x) + 1] = self.config.foreground.g;
+                    img[4*(y*w+x) + 2] = self.config.foreground.b;
+                    img[4*(y*w+x) + 3] = self.config.foreground.a;
                 }
             }
         }

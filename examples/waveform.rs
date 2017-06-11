@@ -3,10 +3,8 @@ extern crate gtk;
 extern crate gdk_pixbuf;
 
 use waveform::*;
-use gtk::{Window, WindowType, WindowExt, WidgetExt, Inhibit, Image, ContainerExt, Button};
+use gtk::{Window, WindowType, WindowExt, WidgetExt, Inhibit, Image, ContainerExt};
 use gdk_pixbuf::Pixbuf;
-
-use std::time::{Duration, SystemTime};
 
 fn main() {
     if gtk::init().is_err() {
@@ -28,8 +26,10 @@ fn main() {
             );
     }
 
-    let mut wfg = CachedWaveformGenerator::new(samples.clone(), 44100f64, 1f64, -1f64, Color{r:0,g:0,b:0,a:255}, Color{r:0,g:0,b:0,a:0});
-    let vec = wfg.generate_vec((0f64, 1f64), (800, 100)).unwrap();
+    let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64, range: TimeRange::Seconds(0f64, 1f64)};
+    let config = WaveformConfig{foreground: Color{r:0,g:0,b:0,a:255}, background: Color{r:0,g:0,b:0,a:0}, amp_min: -1f64, amp_max: 1f64};
+    let mut wfg = CachedWaveformGenerator::new(ss, config);
+    let vec = wfg.generate_vec(TimeRange::Seconds(0f64, 1f64), (800, 100)).unwrap();
     let pixbuf = Pixbuf::new_from_vec(vec, 0, true, 8, 800, 100, 800*4);
     let image = Image::new_from_pixbuf(Some(&pixbuf));
     window.add(&image);
