@@ -1,21 +1,10 @@
 use std::error::Error;
-use std::fmt;
 
-#[derive(Debug)]
-pub struct InvalidSizeError {
-    var_name: String,
-}
+mod error;
+use error::InvalidSizeError;
 
-impl fmt::Display for InvalidSizeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Invalid size of {}", self.var_name)
-    }
-}
-impl Error for InvalidSizeError {
-    fn description(&self) -> &str {
-        "An numeric value of an invalid size has been passed."
-    }
-}
+mod zero;
+use zero::Zero;
 
 #[derive(Copy, Clone)]
 pub enum Color {
@@ -46,30 +35,6 @@ pub struct SimpleWaveformGenerator {
 pub enum TimeRange {
     Seconds(f64, f64),
     Samples(usize, usize),
-}
-
-pub trait Zero {
-    fn zero() -> Self;
-}
-impl Zero for f64 {
-    fn zero() -> Self {
-        0f64
-    }
-}
-impl Zero for f32 {
-    fn zero() -> Self {
-        0f32
-    }
-}
-impl Zero for u8 {
-    fn zero() -> Self {
-        0u8
-    }
-}
-impl Zero for i8 {
-    fn zero() -> Self {
-        0i8
-    }
 }
 
 pub trait Sample: PartialOrd + Into<f64> + Copy + Zero {}
