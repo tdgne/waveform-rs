@@ -4,6 +4,8 @@ waveform is a set of (currently two) waveform image generators written in Rust.
 
 Work is in progress.
 
+This lib currently has no backends, so it directly manipulates `Vec<u8>`s.
+
 ## Features
 
 * Generation of bicolored raster images (outputs are `Vec<u8>`)
