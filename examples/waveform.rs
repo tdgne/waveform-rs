@@ -26,7 +26,7 @@ fn main() {
             );
     }
 
-    let use_lightweight = true;
+    let use_lightweight = false;
     let vec: Vec<u8>;
 
     let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64};
