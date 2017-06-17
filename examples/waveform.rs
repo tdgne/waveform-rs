@@ -12,7 +12,7 @@ fn main() {
     }
 
     let window = Window::new(WindowType::Toplevel);
-    window.set_title("A SimpleWaveformGenerator Test");
+    window.set_title("A simple waveform generator test");
     window.set_default_size(800, 100);
     window.connect_delete_event(|_,_| {
         gtk::main_quit();
@@ -26,17 +26,17 @@ fn main() {
             );
     }
 
-    let use_lightweight = false;
+    let use_binned = false;
     let vec: Vec<u8>;
 
     let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64};
     let config = WaveformConfig{foreground: Color::RGBA{r:0,g:0,b:0,a:255}, background: Color::RGBA{r:0,g:0,b:0,a:0}, amp_min: -1f64, amp_max: 1f64};
     
-    if use_lightweight {
-        let mut wfg = LightweightWaveformGenerator::new(&ss, 10, config).unwrap();
+    if use_binned {
+        let mut wfg = BinnedWaveformGenerator::new(&ss, 10, config).unwrap();
         vec = wfg.generate_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100)).unwrap();
     }else{
-        let wfg = SimpleWaveformGenerator{sample_rate: 44100f64, config: config};
+        let wfg = DirectWaveformGenerator{sample_rate: 44100f64, config: config};
         vec = wfg.generate_vec(&samples, (800, 100)).unwrap();
     }
 
