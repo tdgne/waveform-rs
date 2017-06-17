@@ -7,10 +7,12 @@ use gtk::{Window, WindowType, WindowExt, WidgetExt, Inhibit, Image, ContainerExt
 use gdk_pixbuf::Pixbuf;
 
 fn main() {
+    // Whether to use Binnedwaveformgenerator or Directwaveformgenerator
+    let use_binned = true; 
+
     if gtk::init().is_err() {
         panic!("Failed to initialize gtk.");
     }
-
     let window = Window::new(WindowType::Toplevel);
     window.set_title("A simple waveform generator test");
     window.set_default_size(800, 100);
@@ -26,13 +28,11 @@ fn main() {
             );
     }
 
-    let use_binned = false;
-    let vec: Vec<u8>;
-
-    let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64};
     let config = WaveformConfig{foreground: Color::RGBA{r:0,g:0,b:0,a:255}, background: Color::RGBA{r:0,g:0,b:0,a:0}, amp_min: -1f64, amp_max: 1f64};
     
+    let vec: Vec<u8>;
     if use_binned {
+        let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64};
         let mut wfg = BinnedWaveformGenerator::new(&ss, 10, config).unwrap();
         vec = wfg.generate_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100)).unwrap();
     }else{
