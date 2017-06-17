@@ -193,6 +193,8 @@ impl SimpleWaveformGenerator {
         let mut img = vec![0u8; w * h * 4];
         let nb_samples = samples.len();
         let samples_per_pixel = nb_samples / w;
+
+        let mut minmax = MinMaxPairSequence{data: Vec::with_capacity(w)};
         for x in 0..w {
             let mut min = samples[x*samples_per_pixel + 0];
             let mut max = samples[x*samples_per_pixel + 0];
@@ -211,34 +213,40 @@ impl SimpleWaveformGenerator {
                     }
                 }
             }
-            for y in 0..h {
-                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
-                if y_translated < min || y_translated > max {
-                    match self.config.background {
-                        Color::RGBA{r, g, b, a} => {
+            minmax.data.push(MinMaxPair{min: min, max: max});
+        }
+
+        match self.config.background {
+            Color::RGBA{r, g, b, a} => {
+                for y in 0..h {
+                    let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
+                    for x in 0..w {
+                        if y_translated < minmax.data[x].min || y_translated > minmax.data[x].max {
                             img[4*(y*w+x) + 0] = r;
                             img[4*(y*w+x) + 1] = g;
                             img[4*(y*w+x) + 2] = b;
                             img[4*(y*w+x) + 3] = a;
-                        },
-                        Color::Scalar(a) => {
-                            img[1*(y*w+x) + 0] = a;
+                        }else{
+                            img[4*(y*w+x) + 0] = r;
+                            img[4*(y*w+x) + 1] = g;
+                            img[4*(y*w+x) + 2] = b;
+                            img[4*(y*w+x) + 3] = a;
                         }
                     }
-                }else{
-                    match self.config.foreground {
-                        Color::RGBA{r, g, b, a} => {
-                            img[4*(y*w+x) + 0] = r;
-                            img[4*(y*w+x) + 1] = g;
-                            img[4*(y*w+x) + 2] = b;
-                            img[4*(y*w+x) + 3] = a;
-                        },
-                        Color::Scalar(a) => {
+                }
+            },
+            Color::Scalar(a) => {
+                for y in 0..h {
+                    let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
+                    for x in 0..w {
+                        if y_translated < minmax.data[x].min || y_translated > minmax.data[x].max {
+                            img[1*(y*w+x) + 0] = a;
+                        }else{
                             img[1*(y*w+x) + 0] = a;
                         }
                     }
                 }
-            }
+            },
         }
         Some(img)
     }

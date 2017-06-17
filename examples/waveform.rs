@@ -26,10 +26,20 @@ fn main() {
             );
     }
 
+    let use_lightweight = true;
+    let vec: Vec<u8>;
+
     let ss = SampleSequence{data: samples.clone(), sample_rate: 44100f64};
     let config = WaveformConfig{foreground: Color::RGBA{r:0,g:0,b:0,a:255}, background: Color::RGBA{r:0,g:0,b:0,a:0}, amp_min: -1f64, amp_max: 1f64};
-    let mut wfg = LightweightWaveformGenerator::new(&ss, 10, config).unwrap();
-    let vec = wfg.generate_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100)).unwrap();
+    
+    if use_lightweight {
+        let mut wfg = LightweightWaveformGenerator::new(&ss, 10, config).unwrap();
+        vec = wfg.generate_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100)).unwrap();
+    }else{
+        let wfg = SimpleWaveformGenerator{sample_rate: 44100f64, config: config};
+        vec = wfg.generate_vec(&samples, (800, 100)).unwrap();
+    }
+
     let pixbuf = Pixbuf::new_from_vec(vec, 0, true, 8, 800, 100, 800*4);
     let image = Image::new_from_pixbuf(Some(&pixbuf));
     window.add(&image);
