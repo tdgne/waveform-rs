@@ -1,3 +1,0 @@
- - [ ] Switching between silhouette and polylines
- - [ ] Fix buf which occurs when I set beginning of range to something >0
- - [ ] Make envelopes look better
