@@ -1,10 +1,15 @@
-use zero::Zero;
+use ::zero::Zero;
 
 /// Color specifiers.
 #[derive(Copy, Clone)]
 pub enum Color {
     /// RGBA format.
-    RGBA { r: u8, g: u8, b: u8, a: u8 },
+    RGBA{
+        r: u8,
+        g: u8,
+        b: u8,
+        a: u8,
+    },
     /// A format with only one value per pixel, or gray scale in other words.
     Scalar(u8),
 }
@@ -36,11 +41,7 @@ pub enum TimeRange {
 ///
 /// Current implementors are f64, f32, u8, and i8.
 pub trait Sample: PartialOrd + Into<f64> + Copy + Zero {}
-impl<T> Sample for T
-where
-    T: PartialOrd + Into<f64> + Copy + Zero,
-{
-}
+impl<T> Sample for T where T: PartialOrd + Into<f64> + Copy + Zero {}
 
 /// A sequence of `Sample`s (a wave) combined with sample rate information.
 pub struct SampleSequence<T: Sample> {
@@ -58,3 +59,4 @@ pub struct MinMaxPair<T: Sample> {
 pub struct MinMaxPairSequence<T: Sample> {
     pub data: Vec<MinMaxPair<T>>,
 }
+

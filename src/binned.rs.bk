@@ -1,6 +1,6 @@
 use std::error::Error;
-use error::InvalidSizeError;
-use misc::*;
+use ::error::InvalidSizeError;
+use ::misc::*;
 
 
 /// A fast "binned" waveform generator.
@@ -20,31 +20,25 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
     /// # Arguments
     ///
     /// * `samples` - The samples that will be used to calculate binned min / max values.
-    ///               It must also contain the sample rate that is used by
+    ///               It must also contain the sample rate that is used by 
     ///               `BinnedWaveformGenerator` to generate images when given a
     ///               `TimeRange::Seconds`.
     /// * `bin_size` - The size of the bins which the min / max values will be binned
     ///                into.
     /// * `config` - See `WaveformConfig`.
-    pub fn new(
-        samples: &SampleSequence<T>,
-        bin_size: usize,
-        config: WaveformConfig,
-    ) -> Result<BinnedWaveformGenerator<T>, Box<Error>> {
+    pub fn new(samples: &SampleSequence<T>, bin_size: usize, config: WaveformConfig) -> Result<BinnedWaveformGenerator<T>, Box<Error>> {
         let mut data: Vec<MinMaxPair<T>> = Vec::new();
         let nb_samples = samples.data.len();
 
         if bin_size > nb_samples {
-            return Err(Box::new(
-                InvalidSizeError { var_name: "bin_size".to_string() },
-            ));
+            return Err(Box::new(InvalidSizeError{var_name: "bin_size".to_string()}));
         }
 
         let nb_bins = nb_samples / bin_size;
 
         for x in 0..nb_bins {
-            let mut min = samples.data[x * bin_size + 0];
-            let mut max = samples.data[x * bin_size + 0];
+            let mut min = samples.data[x*bin_size + 0];
+            let mut max = samples.data[x*bin_size + 0];
             if bin_size > 1 {
                 for i in 1..bin_size {
                     let idx = x * bin_size + i;
@@ -54,26 +48,21 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
                     let s = samples.data[idx];
                     if s > max {
                         max = s;
-                    } else if s < min {
+                    }else if s < min {
                         min = s;
                     }
                 }
             }
-            data.push(MinMaxPair { min: min, max: max });
+            data.push(MinMaxPair{min: min, max: max});
         }
-        let minmax = MinMaxPairSequence { data: data };
-        Ok(Self {
-            config: config,
-            bin_size: bin_size,
-            minmax: minmax,
-            sample_rate: samples.sample_rate,
-        })
+        let minmax = MinMaxPairSequence{data: data};
+        Ok(Self{config: config, bin_size: bin_size, minmax: minmax, sample_rate: samples.sample_rate})
     }
 
     /// Generates an image as a `Vec<u8>`.
     ///
     /// # Arguments
-    ///
+    /// 
     /// * `range` - The samples within this `TimeRange` will be visualized.
     /// * `shape` - The `(width, height)` of the resulting image.
     pub fn generate_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
@@ -96,10 +85,8 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
 
         let mut img = vec![0u8; w * h * 4];
         let (begin, end) = match range {
-            TimeRange::Seconds(b, e) => (
-                (b * self.sample_rate) as usize,
-                (e * self.sample_rate) as usize,
-            ),
+            TimeRange::Seconds(b, e) => ((b * self.sample_rate) as usize,
+                                         (e * self.sample_rate) as usize),
             TimeRange::Samples(b, e) => (b, e),
         };
         let nb_samples = end - begin;
@@ -113,10 +100,10 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
         for x in 0..w {
             let inc = if x == 0 {
                 bins_per_pixel_floor
-            } else {
+            }else{
                 if ((start_bin_idx - offset_bin_idx) as f64 + 1f64) / (x as f64) < bins_per_pixel {
                     bins_per_pixel_ceil
-                } else {
+                }else{
                     bins_per_pixel_floor
                 }
             };
@@ -130,49 +117,43 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
                 let range_start = start_bin_idx;
                 let range_end = if start_bin_idx + inc <= self.minmax.data.len() {
                     start_bin_idx + inc
-                } else {
+                }else{
                     self.minmax.data.len()
                 };
                 for b in self.minmax.data[range_start..range_end].iter() {
-                    if b.min < min {
-                        min = b.min
-                    }
-                    if b.max > max {
-                        max = b.max
-                    }
+                    if b.min < min { min = b.min }
+                    if b.max > max { max = b.max }
                 }
                 start_bin_idx = range_end;
-            } else {
+            }else{
                 min = T::zero();
                 max = T::zero();
             }
 
             for y in 0..h {
-                let y_translated = ((h - y) as f64) / (h as f64) *
-                    (self.config.amp_max - self.config.amp_min) +
-                    self.config.amp_min;
+                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
                 if y_translated < min.into() || y_translated > max.into() {
                     match self.config.background {
-                        Color::RGBA { r, g, b, a } => {
-                            img[4 * (y * w + x) + 0] = r;
-                            img[4 * (y * w + x) + 1] = g;
-                            img[4 * (y * w + x) + 2] = b;
-                            img[4 * (y * w + x) + 3] = a;
-                        }
+                        Color::RGBA{r, g, b, a} => {
+                            img[4*(y*w+x) + 0] = r;
+                            img[4*(y*w+x) + 1] = g;
+                            img[4*(y*w+x) + 2] = b;
+                            img[4*(y*w+x) + 3] = a;
+                        },
                         Color::Scalar(a) => {
-                            img[1 * (y * w + x) + 0] = a;
+                            img[1*(y*w+x) + 0] = a;
                         }
                     }
-                } else {
+                }else{
                     match self.config.foreground {
-                        Color::RGBA { r, g, b, a } => {
-                            img[4 * (y * w + x) + 0] = r;
-                            img[4 * (y * w + x) + 1] = g;
-                            img[4 * (y * w + x) + 2] = b;
-                            img[4 * (y * w + x) + 3] = a;
-                        }
+                        Color::RGBA{r, g, b, a} => {
+                            img[4*(y*w+x) + 0] = r;
+                            img[4*(y*w+x) + 1] = g;
+                            img[4*(y*w+x) + 2] = b;
+                            img[4*(y*w+x) + 3] = a;
+                        },
                         Color::Scalar(a) => {
-                            img[1 * (y * w + x) + 0] = a;
+                            img[1*(y*w+x) + 0] = a;
                         }
                     }
                 }
@@ -182,3 +163,6 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
         Some(img)
     }
 }
+
+
+

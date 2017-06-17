@@ -16,3 +16,5 @@ impl Error for InvalidSizeError {
         "An numeric value of an invalid size has been passed."
     }
 }
+
+
