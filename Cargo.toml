@@ -7,7 +7,7 @@ repository = "https://github.com/tdgne/waveform-rs"
 categories = ["multimedia::audio", "multimedia::images", "visualization"]
 keywords = ["signal", "wave", "sound", "image", "raster"]
 readme = "README.md"
-license = "MIT"
+license-file = "LICENCE"
 
 [dependencies]
 
