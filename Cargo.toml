@@ -2,6 +2,11 @@
 name = "waveform"
 version = "0.1.0"
 authors = ["tdgne"]
+description = "Audio waveform image generators"
+repository = "https://github.com/tdgne/waveform-rs"
+categories = ["multimedia::audio", "multimedia::images", "visualization"]
+keywords = ["signal", "wave", "sound", "image", "raster"]
+readme = "README.md"
 
 [dependencies]
 
