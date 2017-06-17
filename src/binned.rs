@@ -3,6 +3,10 @@ use ::error::InvalidSizeError;
 use ::misc::*;
 
 
+/// A fast "binned" waveform generator.
+///
+/// Minimum / maximum amplitude values are binned to reduce
+/// calculation and memory usage.
 pub struct BinnedWaveformGenerator<T: Sample> {
     pub config: WaveformConfig,
     sample_rate: f64,
@@ -11,6 +15,17 @@ pub struct BinnedWaveformGenerator<T: Sample> {
 }
 
 impl<T: Sample> BinnedWaveformGenerator<T> {
+    /// The constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `samples` - The samples that will be used to calculate binned min / max values.
+    ///               It must also contain the sample rate that is used by 
+    ///               `BinnedWaveformGenerator` to generate images when given a
+    ///               `TimeRange::Seconds`.
+    /// * `bin_size` - The size of the bins which the min / max values will be binned
+    ///                into.
+    /// * `config` - See `WaveformConfig`.
     pub fn new(samples: &SampleSequence<T>, bin_size: usize, config: WaveformConfig) -> Result<BinnedWaveformGenerator<T>, Box<Error>> {
         let mut data: Vec<MinMaxPair<T>> = Vec::new();
         let nb_samples = samples.data.len();
@@ -44,7 +59,25 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
         Ok(Self{config: config, bin_size: bin_size, minmax: minmax, sample_rate: samples.sample_rate})
     }
 
+    /// Generates an image as a `Vec<u8>`.
+    ///
+    /// # Arguments
+    /// 
+    /// * `range` - The samples within this `TimeRange` will be visualized.
+    /// * `shape` - The `(width, height)` of the resulting image.
     pub fn generate_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
+        let mut bg_is_scalar = false;
+        let mut fg_is_scalar = false;
+        if let Color::Scalar(_) = self.config.background {
+            bg_is_scalar = true;
+        }
+        if let Color::Scalar(_) = self.config.foreground {
+            fg_is_scalar = true;
+        }
+        if bg_is_scalar ^ fg_is_scalar {
+            panic!("Color formats of background and foreground are inconsistent!");
+        }
+
         let (w, h) = shape;
         if w == 0 || h == 0 {
             return None;
