@@ -33,8 +33,6 @@ pub enum TimeRange {
 }
 
 /// A sample.
-///
-/// Current implementors are f64, f32, u8, and i8.
 pub trait Sample: PartialOrd + Into<f64> + Copy + Zero {}
 impl<T> Sample for T
 where
