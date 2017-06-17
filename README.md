@@ -2,13 +2,16 @@
 
 waveform is a set of (currently two) waveform image generators written in Rust.
 
+Work is in progress.
+
 ## Features
 
-* Generation of raster images (outputs are `Vec<u8>`)
+* Generation of bicolored raster images (outputs are `Vec<u8>`)
   * RGBA format images
-  * Gray scale (scalar pixel) images
+  * Gray scale (scalar pixel) images for use as masks etc.
 * Direct generation from a Vec of samples
 * Faster indirect generation from cache
+* Time-range specification in either seconds (f64) or samples (usize)
 
 ## Screenshot
 
