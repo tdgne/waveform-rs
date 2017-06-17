@@ -1,6 +1,6 @@
 # waveform
 
-waveform is a set of (currently two) waveform image generators written in rust.
+waveform is a set of (currently two) waveform image generators written in Rust.
 
 ## Features
 
