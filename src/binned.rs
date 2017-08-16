@@ -181,4 +181,11 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
 
         Some(img)
     }
+
+    pub fn get_bin_size(&self) -> usize {
+        self.bin_size
+    }
+    pub fn get_sample_rate(&self) -> f64 {
+        self.sample_rate
+    }
 }

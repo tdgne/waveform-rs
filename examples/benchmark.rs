@@ -34,7 +34,7 @@ fn main() {
     {
         let mut wfg = BinnedWaveformRenderer::new(
             &SampleSequence {
-                data: samples.clone(),
+                data: &samples[..],
                 sample_rate: 44100f64,
             },
             10,

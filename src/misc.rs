@@ -41,8 +41,8 @@ where
 }
 
 /// A sequence of `Sample`s (a wave) combined with sample rate information.
-pub struct SampleSequence<T: Sample> {
-    pub data: Vec<T>,
+pub struct SampleSequence<'a, T: Sample + 'a> {
+    pub data: &'a [T],
     pub sample_rate: f64,
 }
 

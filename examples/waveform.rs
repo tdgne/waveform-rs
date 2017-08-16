@@ -48,7 +48,7 @@ fn main() {
     let vec: Vec<u8>;
     if use_binned {
         let ss = SampleSequence {
-            data: samples.clone(),
+            data: &samples[..],
             sample_rate: 44100f64,
         };
         let mut wfg = BinnedWaveformRenderer::new(&ss, 10, config).unwrap();

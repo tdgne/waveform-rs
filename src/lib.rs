@@ -10,5 +10,8 @@ pub use misc::{SampleSequence, WaveformConfig, Color, TimeRange, Sample};
 pub mod binned;
 pub use binned::BinnedWaveformRenderer;
 
+pub mod multi;
+pub use multi::MultiWaveformRenderer;
+
 pub mod direct;
 pub use direct::DirectWaveformRenderer;
