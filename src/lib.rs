@@ -1,4 +1,4 @@
-//! Waveform image generators meant to be used for audio visualization.
+//! Waveform image renderes meant to be used for audio visualization.
 
 pub mod error;
 
@@ -8,7 +8,7 @@ pub mod misc;
 pub use misc::{SampleSequence, WaveformConfig, Color, TimeRange, Sample};
 
 pub mod binned;
-pub use binned::BinnedWaveformGenerator;
+pub use binned::BinnedWaveformRenderer;
 
 pub mod direct;
-pub use direct::DirectWaveformGenerator;
+pub use direct::DirectWaveformRenderer;

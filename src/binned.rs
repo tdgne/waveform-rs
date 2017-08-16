@@ -3,25 +3,25 @@ use error::InvalidSizeError;
 use misc::*;
 
 
-/// A fast "binned" waveform generator.
+/// A fast "binned" waveform renderer.
 ///
 /// Minimum / maximum amplitude values are binned to reduce
 /// calculation and memory usage.
-pub struct BinnedWaveformGenerator<T: Sample> {
+pub struct BinnedWaveformRenderer<T: Sample> {
     pub config: WaveformConfig,
     sample_rate: f64,
     bin_size: usize,
     minmax: MinMaxPairSequence<T>,
 }
 
-impl<T: Sample> BinnedWaveformGenerator<T> {
+impl<T: Sample> BinnedWaveformRenderer<T> {
     /// The constructor.
     ///
     /// # Arguments
     ///
     /// * `samples` - The samples that will be used to calculate binned min / max values.
     ///               It must also contain the sample rate that is used by
-    ///               `BinnedWaveformGenerator` to generate images when given a
+    ///               `BinnedWaveformRenderer` to render images when given a
     ///               `TimeRange::Seconds`.
     /// * `bin_size` - The size of the bins which the min / max values will be binned
     ///                into.
@@ -30,7 +30,7 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
         samples: &SampleSequence<T>,
         bin_size: usize,
         config: WaveformConfig,
-    ) -> Result<BinnedWaveformGenerator<T>, Box<Error>> {
+    ) -> Result<BinnedWaveformRenderer<T>, Box<Error>> {
         let mut data: Vec<MinMaxPair<T>> = Vec::new();
         let nb_samples = samples.data.len();
 
@@ -74,9 +74,9 @@ impl<T: Sample> BinnedWaveformGenerator<T> {
     ///
     /// # Arguments
     ///
-    /// * `range` - The samples within this `TimeRange` will be visualized.
+    /// * `range` - The samples within this `TimeRange` will be rendered.
     /// * `shape` - The `(width, height)` of the resulting image.
-    pub fn generate_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
+    pub fn render_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
         let mut bg_is_scalar = false;
         let mut fg_is_scalar = false;
         if let Color::Scalar(_) = self.config.background {

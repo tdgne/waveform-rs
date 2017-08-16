@@ -32,7 +32,7 @@ fn main() {
 
     // Binned version
     {
-        let mut wfg = BinnedWaveformGenerator::new(
+        let mut wfg = BinnedWaveformRenderer::new(
             &SampleSequence {
                 data: samples.clone(),
                 sample_rate: 44100f64,
@@ -42,25 +42,25 @@ fn main() {
         ).unwrap();
         let now = SystemTime::now();
         for _ in 0..100 {
-            wfg.generate_vec(TimeRange::Seconds(0f64, 1f64), (1000, 100));
+            wfg.render_vec(TimeRange::Seconds(0f64, 1f64), (1000, 100));
         }
         if let Ok(elapsed) = now.elapsed() {
-            println!("{} {}", elapsed.as_secs(), elapsed.subsec_nanos());
+            println!("Binned: {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
         }
     }
 
     // Direct version
     {
-        let wfg = DirectWaveformGenerator {
+        let wfg = DirectWaveformRenderer {
             sample_rate: 44100f64,
             config: config.clone(),
         };
         let now = SystemTime::now();
         for _ in 0..100 {
-            wfg.generate_vec(&samples, (1000, 100));
+            wfg.render_vec(&samples, (1000, 100));
         }
         if let Ok(elapsed) = now.elapsed() {
-            println!("{} {}", elapsed.as_secs(), elapsed.subsec_nanos());
+            println!("Direct: {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
         }
     }
 }

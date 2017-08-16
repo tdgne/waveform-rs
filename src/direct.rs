@@ -1,19 +1,19 @@
 use misc::*;
 
 #[derive(Copy, Clone)]
-pub struct DirectWaveformGenerator {
+pub struct DirectWaveformRenderer {
     pub sample_rate: f64,
     pub config: WaveformConfig,
 }
 
-impl DirectWaveformGenerator {
+impl DirectWaveformRenderer {
     /// Generates an image as a `Vec<u8>` directly from the given samples.
     ///
     /// # Arguments
     ///
-    /// * `samples` - The `Sample`s that will be used to generate the image.
+    /// * `samples` - The `Sample`s that will be used to render the image.
     /// * `shape` - The `(width, height)` of the resulting image.
-    pub fn generate_vec<T: Sample>(&self, samples: &[T], shape: (usize, usize)) -> Option<Vec<u8>> {
+    pub fn render_vec<T: Sample>(&self, samples: &[T], shape: (usize, usize)) -> Option<Vec<u8>> {
         let (w, h) = shape;
         if w == 0 || h == 0 {
             return None;
@@ -22,7 +22,7 @@ impl DirectWaveformGenerator {
         let nb_samples = samples.len();
         let samples_per_pixel = nb_samples / w;
 
-        // Unlike Binnedwaveformgenerator, the minmax values corresponding to
+        // Unlike BinnedWaveformRenderer, the minmax values corresponding to
         // each horizontal pixel is calculated beforehand, for the same reasons
         // discussed later in these comments.
         let mut minmax = MinMaxPairSequence { data: Vec::with_capacity(w) };
@@ -47,9 +47,9 @@ impl DirectWaveformGenerator {
             minmax.data.push(MinMaxPair { min: min, max: max });
         }
 
-        // Unlike Binnedwaveformgenerator, the `match` is outside the `for`s
+        // Unlike BinnedWaveformRenderer, the `match` is outside the `for`s
         // because it's faster this way.
-        // I've also tried it in Binnedwaveformgenerator but it didn't make a
+        // I've also tried it in BinnedWaveformRenderer but it didn't make a
         // significant improvement in speed, so it's left that way.
         match (self.config.background, self.config.foreground) {
             (

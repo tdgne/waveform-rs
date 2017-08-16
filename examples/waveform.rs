@@ -7,14 +7,14 @@ use gtk::{Window, WindowType, WindowExt, WidgetExt, Inhibit, Image, ContainerExt
 use gdk_pixbuf::Pixbuf;
 
 fn main() {
-    // Whether to use Binnedwaveformgenerator or Directwaveformgenerator
+    // Whether to use BinnedWaveformRenderer or DirectWaveformRenderer
     let use_binned = true;
 
     if gtk::init().is_err() {
         panic!("Failed to initialize gtk.");
     }
     let window = Window::new(WindowType::Toplevel);
-    window.set_title("A simple waveform generator test");
+    window.set_title("A simple waveform renderer test");
     window.set_default_size(800, 100);
     window.connect_delete_event(|_, _| {
         gtk::main_quit();
@@ -51,15 +51,15 @@ fn main() {
             data: samples.clone(),
             sample_rate: 44100f64,
         };
-        let mut wfg = BinnedWaveformGenerator::new(&ss, 10, config).unwrap();
-        vec = wfg.generate_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100))
+        let mut wfg = BinnedWaveformRenderer::new(&ss, 10, config).unwrap();
+        vec = wfg.render_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100))
             .unwrap();
     } else {
-        let wfg = DirectWaveformGenerator {
+        let wfg = DirectWaveformRenderer {
             sample_rate: 44100f64,
             config: config,
         };
-        vec = wfg.generate_vec(&samples, (800, 100)).unwrap();
+        vec = wfg.render_vec(&samples, (800, 100)).unwrap();
     }
 
     let pixbuf = Pixbuf::new_from_vec(vec, 0, true, 8, 800, 100, 800 * 4);

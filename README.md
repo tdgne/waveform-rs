@@ -1,6 +1,6 @@
 # waveform
 
-waveform is a set of (currently two) waveform image generators written in Rust.
+waveform is a set of (currently two) waveform image renderers written in Rust.
 
 Work is in progress.
 
@@ -11,8 +11,8 @@ This lib currently has no backends, so it directly manipulates `Vec<u8>`s.
 * Generation of bicolored raster images (outputs are `Vec<u8>`)
   * RGBA format images
   * Gray scale (scalar pixel) images for use as masks etc.
-* Direct generation from a Vec of samples
-* Faster indirect generation from cache
+* Direct rendering from a Vec of samples
+* Faster indirect rendering from cache
 * Time-range specification in either seconds (f64) or samples (usize)
 
 ## Screenshot
