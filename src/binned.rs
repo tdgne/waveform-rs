@@ -70,6 +70,7 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
         })
     }
 
+
     /// Generates an image as a `Vec<u8>`.
     ///
     /// # Arguments
