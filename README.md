@@ -17,7 +17,6 @@ This lib currently has no backends, so it directly manipulates `Vec<u8>`s.
 ## Some Goals
 
 * GPU acceleration (perhaps with OpenCL)
-* Multilevel binning
 
 
 
