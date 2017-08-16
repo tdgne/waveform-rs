@@ -37,8 +37,12 @@ impl<T: Sample> MultiWaveformRenderer<T> {
         let samples_per_pixel = ((end - begin) as f64) / (shape.0 as f64);
 
         let mut bin_sizes: Vec<usize> = self.binned.keys().map(|x| *x).collect();
+        if bin_sizes.len() == 0 {
+            return None;
+        }
+
         bin_sizes.sort();
-        let mut bin_size = 0usize;
+        let mut bin_size = bin_sizes[0];
         for bs in bin_sizes.iter() {
             if (*bs as f64) <= samples_per_pixel {
                 bin_size = *bs;
