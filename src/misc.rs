@@ -56,3 +56,21 @@ pub struct MinMaxPair<T: Sample> {
 pub struct MinMaxPairSequence<T: Sample> {
     pub data: Vec<MinMaxPair<T>>,
 }
+
+/// Utility macro for accessing pixels
+macro_rules! pixel {
+    ($name:ident [ H ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr ])
+        => ($name[($x + $y * $w) * $l + $i]);
+    ($name:ident [ V ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr ])
+        => ($name[($y + $x * $h) * $l + $i]);
+    ($name:ident [ $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr ])
+        => (pixel!($name[H; $w, $h, $l; $x, $y, $i])); //
+    ($name:ident [ H ; $w:expr, $h:expr ; $x:expr , $y:expr ])
+        => (pixel!($name[H; $w, $h, 1; $x, $y, 0]));
+    ($name:ident [ V ; $w:expr, $h:expr ; $x:expr , $y:expr ])
+        => (pixel!($name[V; $w, $h, 1; $x, $y, 0]));
+    ($name:ident [ $w:expr, $h:expr ; $x:expr , $y:expr ])
+        => (pixel!($name[$w, $h, 1; $x, $y, 0]));
+}
+
+

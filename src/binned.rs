@@ -1,6 +1,8 @@
 use std::error::Error;
+use std::cmp;
 use error::InvalidSizeError;
 use misc::*;
+use rlibc;
 
 
 /// A fast "binned" waveform renderer.
@@ -148,35 +150,52 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                 max = T::zero();
             }
 
-            for y in 0..h {
-                let y_translated = ((h - y) as f64) / (h as f64) *
-                    (self.config.amp_max - self.config.amp_min) +
-                    self.config.amp_min;
-                if y_translated < min.into() || y_translated > max.into() {
-                    match self.config.background {
-                        Color::RGBA { r, g, b, a } => {
-                            img[4 * (y * w + x) + 0] = r;
-                            img[4 * (y * w + x) + 1] = g;
-                            img[4 * (y * w + x) + 2] = b;
-                            img[4 * (y * w + x) + 3] = a;
+            let scale = 1f64 / (self.config.amp_max - self.config.amp_min) * (h as f64);
+            let min_translated: usize = h - cmp::max(0, cmp::min(h, ((min.into() - self.config.amp_min) * scale).floor() as usize));
+            let max_translated: usize = h - cmp::max(0, cmp::min(h, ((max.into() - self.config.amp_min) * scale).floor() as usize));
+
+            match (self.config.background, self.config.foreground) {
+                (Color::RGBA{r:br, g:bg, b:bb, a:ba}, Color::RGBA{r:fr, g:fg, b:fb, a:fa})
+                    => {
+                        let bg_colors: [u8; 4] = [br, bg, bb, ba];
+                        let fg_colors: [u8; 4] = [fr, fg, fb, fa];
+                        unsafe {
+                            for y in 0..max_translated {
+                                    rlibc::memcpy(
+                                        &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                        &bg_colors[0] as _,
+                                        4
+                                        );
+                            }
+                            for y in max_translated..min_translated {
+                                    rlibc::memcpy(
+                                        &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                        &fg_colors[0] as _,
+                                        4
+                                        );
+                            }
+                            for y in min_translated..h {
+                                    rlibc::memcpy(
+                                        &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                        &bg_colors[0] as _,
+                                        4
+                                        );
+                            }
                         }
-                        Color::Scalar(a) => {
-                            img[1 * (y * w + x) + 0] = a;
+                    },
+                (Color::Scalar(ba), Color::Scalar(fa))
+                    => {
+                        for y in 0..max_translated {
+                            pixel!(img[w, h; x, y]) = ba;
                         }
-                    }
-                } else {
-                    match self.config.foreground {
-                        Color::RGBA { r, g, b, a } => {
-                            img[4 * (y * w + x) + 0] = r;
-                            img[4 * (y * w + x) + 1] = g;
-                            img[4 * (y * w + x) + 2] = b;
-                            img[4 * (y * w + x) + 3] = a;
+                        for y in max_translated..min_translated {
+                            pixel!(img[w, h; x, y]) = fa;
                         }
-                        Color::Scalar(a) => {
-                            img[1 * (y * w + x) + 0] = a;
+                        for y in min_translated..h {
+                            pixel!(img[w, h; x, y]) = ba;
                         }
-                    }
-                }
+                    },
+                (_, _) => unreachable!(),
             }
         }
 
