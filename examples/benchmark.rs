@@ -50,7 +50,7 @@ fn main() {
             wfg.render_vec(TimeRange::Seconds(0f64, 10f64*ratio), (width, 100));
         }
         if let Ok(elapsed) = now.elapsed() {
-            println!("Multi:  {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
+            println!("Multi * 1000 times:  {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
         }
     }
 
@@ -69,22 +69,7 @@ fn main() {
             wfg.render_vec(TimeRange::Seconds(0f64, 10f64*ratio), (width, 100));
         }
         if let Ok(elapsed) = now.elapsed() {
-            println!("Binned: {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
-        }
-    }
-
-    // Direct version
-    {
-        let wfg = DirectWaveformRenderer {
-            sample_rate: 44100f64,
-            config: config.clone(),
-        };
-        let now = SystemTime::now();
-        for _ in 0..100 {
-            wfg.render_vec(&samples[0..((441000f64*ratio) as usize)], (1000, 100));
-        }
-        if let Ok(elapsed) = now.elapsed() {
-            println!("Direct: {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
+            println!("Binned * 1000 times: {} secs + {} nsecs", elapsed.as_secs(), elapsed.subsec_nanos());
         }
     }
 }
