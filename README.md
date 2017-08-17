@@ -1,23 +1,18 @@
 # waveform
 
 waveform is a set of (currently two) waveform image renderers written in Rust.
-It is speed-oriented for heavy use (GPU acceleration coming soon).
+It is speed-oriented for heavy use.
 
-This lib currently has no backends, so it directly manipulates `Vec<u8>`s.
+This lib currently has no backends, so it directly renders to a `Vec<u8>`.
 
 ## Features
 
 * Generation of bicolored raster images (outputs are `Vec<u8>`)
-  * RGBA format images
-  * Gray scale (scalar pixel) images for use as masks etc.
-* Direct rendering from a `Vec` of samples
-* Faster indirect rendering from binned values
+  * `RGBA` format images
+  * Gray scale (`Scalar`) images for use as masks etc.
+* Fast rendering from binned min/max amplitudes
+* Multilevel binning for rendering in various resolutions.
 * Time-range specification in either seconds (`f64`) or samples (`usize`)
-
-## Some Goals
-
-* GPU acceleration (perhaps with OpenCL)
-
 
 
 ## Screenshot
