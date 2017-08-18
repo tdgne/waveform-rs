@@ -8,7 +8,7 @@ It is speed-oriented for heavy use.
 
 ## Features
 
-* Generation of bicolored raster images (outputs are `Vec<u8>`)
+* Generation of bicolored raster images (outputs are either returned as `Vec<u8>`s or written into a slice)
   * `RGBA` format images
   * Gray scale (`Scalar`) images for use as masks etc.
 * Fast rendering from binned min/max amplitudes
@@ -17,7 +17,6 @@ It is speed-oriented for heavy use.
 
 ## Some TODOs
 
-* Direct writing into given slices
 * Cached rendering
 * Guarantee thread safety (it probably is...)
 * Memory/time optimizations

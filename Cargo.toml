@@ -1,6 +1,6 @@
 [package]
 name = "waveform"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["tdgne"]
 description = "Audio waveform image renderers"
 repository = "https://github.com/tdgne/waveform-rs"

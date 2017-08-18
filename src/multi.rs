@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error::Error;
 
 use super::misc::*;
+use super::error::*;
 use super::binned::BinnedWaveformRenderer;
 
 /// A renderer that contains multiple `BinnedWaveformRenderer`s
@@ -45,29 +46,7 @@ impl<T: Sample> MultiWaveformRenderer<T> {
         Ok(r)
     }
 
-    /// Renders an image as a `Vec<u8>`.
-    ///
-    /// `None` will be returned if the area of the specified `shape` is equal to zero.
-    ///
-    /// # Arguments
-    ///
-    /// * `range` - The samples within this `TimeRange` will be rendered.
-    /// * `shape` - The `(width, height)` of the resulting image in pixels.
-    pub fn render_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
-        let (w, h) = shape;
-        if w == 0 || h == 0 {
-            return None;
-        }
-
-        let (begin, end) = match range {
-            TimeRange::Seconds(b, e) => (
-                (b * self.sample_rate) as usize,
-                (e * self.sample_rate) as usize,
-            ),
-            TimeRange::Samples(b, e) => (b, e),
-        };
-
-        let samples_per_pixel = ((end - begin) as f64) / (shape.0 as f64);
+    fn get_optimal_bin_size(&self, samples_per_pixel: f64) -> Option<usize> {
 
         let mut bin_sizes: Vec<usize> = self.binned.keys().map(|x| *x).collect();
         if bin_sizes.len() == 0 {
@@ -84,10 +63,68 @@ impl<T: Sample> MultiWaveformRenderer<T> {
             }
         }
 
-        self.binned
-            .get_mut(&bin_size)
-            .unwrap()
-            .render_vec(range, shape)
+        Some(bin_size)
+    }
+
+    /// Renders an image as a `Vec<u8>`.
+    ///
+    /// `None` will be returned if the area of the specified `shape` is equal to zero.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The samples within this `TimeRange` will be rendered.
+    /// * `shape` - The `(width, height)` of the resulting image in pixels.
+    pub fn render_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
+        let (w, h) = shape;
+        if w == 0 || h == 0 {
+            return None;
+        }
+
+        let (begin, end) = range.to_sample_tuple(self.sample_rate);
+
+        let samples_per_pixel = ((end - begin) as f64) / (w as f64);
+
+        if let Some(bin_size) = self.get_optimal_bin_size(samples_per_pixel) {
+            return self.binned
+                .get_mut(&bin_size)
+                .unwrap()
+                .render_vec(range, shape);
+        }else{
+            return None;
+        }
+    }
+
+
+    /// Writes the image into a mutable reference to a slice.
+    ///
+    /// It will raise an error if
+    ///
+    /// * the area of the specified `shape` is equal to zero.
+    /// * the length of `img` is not long enough to contain the result.
+    ///   `(offsets.0 + shape.0) * (offsets.1 + shape.1) * (Bytes per pixel) <= img.len()`
+    ///   must be satisfied.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The samples within this `TimeRange` will be rendered.
+    /// * `offsets` - The `(x-offset, y-offset)` of the resulting image in pixels.
+    ///               Specifies the starting position to write into `img`.
+    /// * `shape` - The `(width, height)` of the resulting image in pixels.
+    /// * `img`   - A mutable reference to the slice to write the result into.
+    ///
+    pub fn render_write(&mut self, range: TimeRange, offsets: (usize, usize), shape: (usize, usize), img: &mut [u8]) -> Result<(), Box<Error>> {
+        let (begin, end) = range.to_sample_tuple(self.sample_rate);
+
+        let samples_per_pixel = ((end - begin) as f64) / (shape.0 as f64);
+
+        if let Some(bin_size) = self.get_optimal_bin_size(samples_per_pixel) {
+            return self.binned
+                .get_mut(&bin_size)
+                .unwrap()
+                .render_write(range, offsets, shape, img);
+        }else{
+            return Err(Box::new(InvalidSizeError{var_name: "bin sizes".to_string()}));
+        }
     }
 }
 

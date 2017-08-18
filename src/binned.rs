@@ -88,7 +88,56 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             return None;
         }
 
-        let mut img = vec![0u8; w * h * 4];
+
+        let mut img = match self.config.get_background() {
+            Color::RGBA{..} => vec![0u8; w * h * 4],
+            Color::Scalar(_) => vec![0u8; w * h],
+        };
+        
+        self.render_write(range, (0, 0), shape, &mut img[..]).unwrap();
+
+        Some(img)
+    }
+
+    /// Writes the image into a mutable reference to a slice.
+    ///
+    /// It will raise an error if
+    ///
+    /// * the area of the specified `shape` is equal to zero.
+    /// * the length of `img` is not long enough to contain the result.
+    ///   `(offsets.0 + shape.0) * (offsets.1 + shape.1) * (Bytes per pixel) <= img.len()`
+    ///   must be satisfied.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The samples within this `TimeRange` will be rendered.
+    /// * `offsets` - The `(x-offset, y-offset)` of the resulting image in pixels.
+    ///               Specifies the starting position to write into `img`.
+    /// * `shape` - The `(width, height)` of the resulting image in pixels.
+    /// * `img`   - A mutable reference to the slice to write the result into.
+    ///
+    pub fn render_write(&self, range: TimeRange, offsets: (usize, usize), shape: (usize, usize), img: &mut [u8]) -> Result<(), Box<Error>> {
+        let (w, h) = shape;
+        if w == 0 || h == 0 {
+            return Err(Box::new(InvalidSizeError{var_name: "shape".to_string()}));
+        }
+
+        let (offx, offy) = offsets;
+
+        // Check if we have enough bytes in `img`
+        match self.config.get_background() {
+            Color::RGBA{..} => {
+                if (offx + w) * (offy + h) * 4 > img.len() {
+                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
+                }
+            },
+            Color::Scalar(_) => {
+                if (offx + w) * (offy + h) > img.len() {
+                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
+                }
+            }
+        }
+
         let (begin, end) = match range {
             TimeRange::Seconds(b, e) => (
                 (b * self.sample_rate) as usize,
@@ -198,12 +247,12 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                         flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
                                         rlibc::memcpy(
-                                            &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                            &mut pixel!(img[w, h, 4; offx+x, offy+y, 0]) as _,
                                             &bg_colors[0] as _,
                                             4
                                             ),
                                         rlibc::memcpy(
-                                            &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                            &mut pixel!(img[w, h, 4; offx+x, offy+y, 0]) as _,
                                             &fg_colors[0] as _,
                                             4
                                             )
@@ -218,9 +267,9 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                     {
                         flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
-                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4]))
+                                    (&mut pixel!(img[w, h, 4; offx+x, offy+y, 0 => 4]))
                                         .write(&bg_colors).unwrap(),
-                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4]))
+                                    (&mut pixel!(img[w, h, 4; offx+x, offy+y, 0 => 4]))
                                         .write(&fg_colors).unwrap()
                                 }
                             }
@@ -229,8 +278,8 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                 (Color::Scalar(ba), Color::Scalar(fa)) => {
                     flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
-                                    pixel!(img[w, h; x, y]) = ba,
-                                    pixel!(img[w, h; x, y]) = fa
+                                    pixel!(img[w, h; offx+x, offy+y]) = ba,
+                                    pixel!(img[w, h; offx+x, offy+y]) = fa
                                 }
                             }
                 }
@@ -242,7 +291,7 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             }
         }
 
-        Some(img)
+        Ok(())
     }
 
     pub fn get_bin_size(&self) -> usize {

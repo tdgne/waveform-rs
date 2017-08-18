@@ -107,6 +107,18 @@ pub enum TimeRange {
     Samples(usize, usize),
 }
 
+impl TimeRange {
+    pub fn to_sample_tuple(&self, sample_rate: f64) -> (usize, usize) {
+        match self {
+            &TimeRange::Seconds(b, e) => (
+                (b * sample_rate) as usize,
+                (e * sample_rate) as usize,
+            ),
+            &TimeRange::Samples(b, e) => (b, e),
+        }
+    }
+}
+
 /// A sample.
 pub trait Sample: PartialOrd + Into<f64> + Copy + Zero {}
 impl<T> Sample for T

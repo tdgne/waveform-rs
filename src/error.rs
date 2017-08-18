@@ -9,7 +9,7 @@ pub struct InvalidSizeError {
 
 impl fmt::Display for InvalidSizeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Invalid size of {}", self.var_name)
+        write!(f, "Invalid size of '{}'", self.var_name)
     }
 }
 impl Error for InvalidSizeError {
