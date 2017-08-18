@@ -46,7 +46,7 @@ impl WaveformConfig {
     /// The constructor.
     ///
     /// # Arguments
-    /// * `amp_min` - Minimum value of amplitude to be rendered 
+    /// * `amp_min` - Minimum value of amplitude to be rendered
     /// * `amp_max` - Maximum value of amplitude to be rendered
     /// * `foreground` - Foreground `Color` of the image, format must be consistent with background.
     /// * `background` - Background `Color` of the image, format must be consistent with foreground.
@@ -56,7 +56,7 @@ impl WaveformConfig {
             _ => (),
         }
 
-        Ok(Self{
+        Ok(Self {
             amp_min,
             amp_max,
             background,
@@ -132,4 +132,3 @@ pub struct MinMaxPair<T: Sample> {
 pub struct MinMaxPairSequence<T: Sample> {
     pub data: Vec<MinMaxPair<T>>,
 }
-

@@ -3,7 +3,8 @@ extern crate gtk;
 extern crate gdk_pixbuf;
 
 use waveform::*;
-use gtk::{Window, WindowType, WindowExt, WidgetExt, Inhibit, Image, ContainerExt};
+use waveform::direct::*;
+use gtk::{ContainerExt, Image, Inhibit, WidgetExt, Window, WindowExt, WindowType};
 use gdk_pixbuf::Pixbuf;
 
 fn main() {
@@ -23,13 +24,13 @@ fn main() {
     let mut samples: Vec<f64> = Vec::new();
     for t in 0..44100 {
         samples.push(
-            ((t as f64) / 100f64 * 2f64 * 3.1415f64).sin() *
-                ((t as f64) / 10000f64 * 2f64 * 3.1415f64).sin(),
+            ((t as f64) / 100f64 * 2f64 * 3.1415f64).sin() * ((t as f64) / 10000f64 * 2f64 * 3.1415f64).sin(),
         );
     }
 
     let config = WaveformConfig::new(
-        -1f64, 1f64,
+        -1f64,
+        1f64,
         Color::RGBA {
             r: 0,
             g: 0,
@@ -41,7 +42,7 @@ fn main() {
             g: 0,
             b: 0,
             a: 0,
-        }
+        },
     ).unwrap();
 
     let vec: Vec<u8>;
@@ -50,7 +51,7 @@ fn main() {
             data: &samples[..],
             sample_rate: 44100f64,
         };
-        let mut wfg = BinnedWaveformRenderer::new(&ss, 10, config).unwrap();
+        let wfg = BinnedWaveformRenderer::new(&ss, 10, config).unwrap();
         vec = wfg.render_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100))
             .unwrap();
     } else {

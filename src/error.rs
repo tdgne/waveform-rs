@@ -24,7 +24,10 @@ pub struct InconsistentFormatError;
 
 impl fmt::Display for InconsistentFormatError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Color formats of background and foreground must be consistent.")
+        write!(
+            f,
+            "Color formats of background and foreground must be consistent."
+        )
     }
 }
 impl Error for InconsistentFormatError {

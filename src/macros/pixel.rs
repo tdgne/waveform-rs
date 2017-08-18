@@ -7,14 +7,16 @@ macro_rules! pixel_pos {
         => ((($y + $x * $h) * $l + $i));
 
     ($orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i1:expr => $i2:expr)
-        => (pixel_pos!($orientation; $w, $h, $l; $x, $y, $i1) .. pixel_pos!($orientation; $w, $h, $l; $x, $y, $i2));
+        => (pixel_pos!($orientation; $w, $h, $l; $x, $y, $i1) ..  pixel_pos!($orientation; $w, $h, $l; $x, $y, $i2));
 }
 
 macro_rules! pixel {
-    ($name:ident [ $orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr ])
+    ($name:ident [ $orientation:ident ; $w:expr, $h:expr, $l:expr ;
+     $x:expr , $y:expr , $i:expr ])
         => ($name[pixel_pos!($orientation; $w, $h, $l; $x, $y, $i)]);
 
-    ($name:ident [ $orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i1:expr => $i2:expr ])
+    ($name:ident [ $orientation:ident ; $w:expr, $h:expr, $l:expr ;
+     $x:expr , $y:expr , $i1:expr => $i2:expr ])
         => ($name[pixel_pos!($orientation; $w, $h, $l; $x, $y, $i1 => $i2)]);
 
 
@@ -27,11 +29,10 @@ macro_rules! pixel {
 
     ($name:ident [ H ; $w:expr, $h:expr ; $x:expr , $y:expr ])
         => (pixel!($name[H; $w, $h, 1; $x, $y, 0]));
-    
+
     ($name:ident [ V ; $w:expr, $h:expr ; $x:expr , $y:expr ])
         => (pixel!($name[V; $w, $h, 1; $x, $y, 0]));
 
     ($name:ident [ $w:expr, $h:expr ; $x:expr , $y:expr ])
         => (pixel!($name[H; $w, $h; $x, $y]));
 }
-

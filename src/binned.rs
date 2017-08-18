@@ -3,10 +3,10 @@ use std::cmp;
 use error::InvalidSizeError;
 use misc::*;
 
-#[cfg(not(feature="rlibc"))]
+#[cfg(not(feature = "rlibc"))]
 use std::io::Write;
 
-#[cfg(feature="rlibc")]
+#[cfg(feature = "rlibc")]
 use rlibc;
 
 
@@ -33,18 +33,14 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
     /// * `bin_size` - The size of the bins which the min / max values will be binned
     ///                into.
     /// * `config` - See `WaveformConfig`.
-    pub fn new(
-        samples: &SampleSequence<T>,
-        bin_size: usize,
-        config: WaveformConfig,
-    ) -> Result<BinnedWaveformRenderer<T>, Box<Error>> {
+    pub fn new(samples: &SampleSequence<T>, bin_size: usize, config: WaveformConfig) -> Result<BinnedWaveformRenderer<T>, Box<Error>> {
         let mut data: Vec<MinMaxPair<T>> = Vec::new();
         let nb_samples = samples.data.len();
 
         if bin_size > nb_samples {
-            return Err(Box::new(
-                InvalidSizeError { var_name: "bin_size".to_string() },
-            ));
+            return Err(Box::new(InvalidSizeError {
+                var_name: "bin_size".to_string(),
+            }));
         }
 
         let nb_bins = nb_samples / bin_size;
@@ -146,20 +142,46 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             }
 
             let scale = 1f64 / (self.config.amp_max - self.config.amp_min) * (h as f64);
-            let min_translated: usize = h - cmp::max(0, cmp::min(h, ((min.into() - self.config.amp_min) * scale).floor() as usize));
-            let max_translated: usize = h - cmp::max(0, cmp::min(h, ((max.into() - self.config.amp_min) * scale).floor() as usize));
+            let min_translated: usize = h -
+                cmp::max(
+                    0,
+                    cmp::min(
+                        h,
+                        ((min.into() - self.config.amp_min) * scale).floor() as usize,
+                    ),
+                );
+            let max_translated: usize = h -
+                cmp::max(
+                    0,
+                    cmp::min(
+                        h,
+                        ((max.into() - self.config.amp_min) * scale).floor() as usize,
+                    ),
+                );
 
             // The following part intensively uses macros.
             // See src/macros/*.rs for their defenitions.
             match (self.config.get_background(), self.config.get_foreground()) {
-                (Color::RGBA{r:br, g:bg, b:bb, a:ba}, Color::RGBA{r:fr, g:fg, b:fb, a:fa})
-                    => {
-                        let bg_colors: [u8; 4] = [br, bg, bb, ba];
-                        let fg_colors: [u8; 4] = [fr, fg, fb, fa];
+                (
+                    Color::RGBA {
+                        r: br,
+                        g: bg,
+                        b: bb,
+                        a: ba,
+                    },
+                    Color::RGBA {
+                        r: fr,
+                        g: fg,
+                        b: fb,
+                        a: fa,
+                    },
+                ) => {
+                    let bg_colors: [u8; 4] = [br, bg, bb, ba];
+                    let fg_colors: [u8; 4] = [fr, fg, fb, fa];
 
-                        #[cfg(feature="rlibc")]
-                        unsafe {
-                            flipping_three_segment_for!{
+                    #[cfg(feature = "rlibc")]
+                    unsafe {
+                        flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
                                         rlibc::memcpy(
                                             &mut pixel!(img[w, h, 4; x, y, 0]) as _,
@@ -173,27 +195,28 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                                             )
                                 }
                             }
-                        }
+                    }
 
-                        #[cfg(not(feature="rlibc"))]
-                        {
-                            flipping_three_segment_for!{
+                    #[cfg(not(feature = "rlibc"))]
+                    {
+                        flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
-                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&bg_colors).unwrap(),
-                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&fg_colors).unwrap()
+                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4]))
+                                        .write(&bg_colors).unwrap(),
+                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4]))
+                                        .write(&fg_colors).unwrap()
                                 }
                             }
-                        }
-                    },
-                (Color::Scalar(ba), Color::Scalar(fa))
-                    => {
-                            flipping_three_segment_for!{
+                    }
+                }
+                (Color::Scalar(ba), Color::Scalar(fa)) => {
+                    flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
                                     pixel!(img[w, h; x, y]) = ba,
                                     pixel!(img[w, h; x, y]) = fa
                                 }
                             }
-                    },
+                }
                 (_, _) => unreachable!(),
             }
         }

@@ -1,6 +1,6 @@
 //! Waveform image renderes meant to be used for audio visualization.
 
-#[cfg(feature="rlibc")]
+#[cfg(feature = "rlibc")]
 extern crate rlibc;
 
 pub mod error;
@@ -8,7 +8,7 @@ pub mod error;
 pub mod zero;
 
 pub mod misc;
-pub use misc::{SampleSequence, WaveformConfig, Color, TimeRange, Sample};
+pub use misc::{Color, Sample, SampleSequence, TimeRange, WaveformConfig};
 
 #[macro_use]
 mod macros;
@@ -21,4 +21,3 @@ pub mod direct;
 
 pub mod multi;
 pub use multi::MultiWaveformRenderer;
-

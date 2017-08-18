@@ -10,8 +10,7 @@ fn gen_samples() -> Vec<f64> {
     for t in 0..441000 {
         // 10 seconds
         samples.push(
-            ((t as f64) / 100f64 * 2f64 * 3.1415f64).sin() *
-                ((t as f64) / 10000f64 * 2f64 * 3.1415f64).sin(),
+            ((t as f64) / 100f64 * 2f64 * 3.1415f64).sin() * ((t as f64) / 10000f64 * 2f64 * 3.1415f64).sin(),
         );
     }
     samples
@@ -19,7 +18,8 @@ fn gen_samples() -> Vec<f64> {
 
 fn gen_config() -> WaveformConfig {
     WaveformConfig::new(
-        -1f64, 1f64,
+        -1f64,
+        1f64,
         Color::RGBA {
             r: 0,
             g: 0,
@@ -31,7 +31,7 @@ fn gen_config() -> WaveformConfig {
             g: 0,
             b: 0,
             a: 0,
-        }
+        },
     ).unwrap()
 }
 
@@ -46,13 +46,13 @@ fn bench_binned(b: &mut Bencher) {
     let config = gen_config();
 
     let wfr = BinnedWaveformRenderer::new(
-            &SampleSequence {
-                data: &samples[..],
-                sample_rate: 44100f64,
-            },
-            bin_size,
-            config.clone(),
-        ).unwrap();
+        &SampleSequence {
+            data: &samples[..],
+            sample_rate: 44100f64,
+        },
+        bin_size,
+        config.clone(),
+    ).unwrap();
 
 
     b.iter(|| {

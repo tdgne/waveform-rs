@@ -25,7 +25,9 @@ impl DirectWaveformRenderer {
         // Unlike BinnedWaveformRenderer, the minmax values corresponding to
         // each horizontal pixel is calculated beforehand, for the same reasons
         // discussed later in these comments.
-        let mut minmax = MinMaxPairSequence { data: Vec::with_capacity(w) };
+        let mut minmax = MinMaxPairSequence {
+            data: Vec::with_capacity(w),
+        };
         for x in 0..w {
             let mut min = samples[x * samples_per_pixel + 0];
             let mut max = samples[x * samples_per_pixel + 0];
@@ -65,44 +67,32 @@ impl DirectWaveformRenderer {
                     b: fb,
                     a: fa,
                 },
-            ) => {
-                for y in 0..h {
-                    let y_translated = ((h - y) as f64) / (h as f64) *
-                        (self.config.amp_max - self.config.amp_min) +
-                        self.config.amp_min;
-                    for x in 0..w {
-                        if y_translated < minmax.data[x].min.into() ||
-                            y_translated > minmax.data[x].max.into()
-                        {
-                            img[4 * (y * w + x) + 0] = br;
-                            img[4 * (y * w + x) + 1] = bg;
-                            img[4 * (y * w + x) + 2] = bb;
-                            img[4 * (y * w + x) + 3] = ba;
-                        } else {
-                            img[4 * (y * w + x) + 0] = fr;
-                            img[4 * (y * w + x) + 1] = fg;
-                            img[4 * (y * w + x) + 2] = fb;
-                            img[4 * (y * w + x) + 3] = fa;
-                        }
+            ) => for y in 0..h {
+                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
+                for x in 0..w {
+                    if y_translated < minmax.data[x].min.into() || y_translated > minmax.data[x].max.into() {
+                        img[4 * (y * w + x) + 0] = br;
+                        img[4 * (y * w + x) + 1] = bg;
+                        img[4 * (y * w + x) + 2] = bb;
+                        img[4 * (y * w + x) + 3] = ba;
+                    } else {
+                        img[4 * (y * w + x) + 0] = fr;
+                        img[4 * (y * w + x) + 1] = fg;
+                        img[4 * (y * w + x) + 2] = fb;
+                        img[4 * (y * w + x) + 3] = fa;
                     }
                 }
-            }
-            (Color::Scalar(ba), Color::Scalar(fa)) => {
-                for y in 0..h {
-                    let y_translated = ((h - y) as f64) / (h as f64) *
-                        (self.config.amp_max - self.config.amp_min) +
-                        self.config.amp_min;
-                    for x in 0..w {
-                        if y_translated < minmax.data[x].min.into() ||
-                            y_translated > minmax.data[x].max.into()
-                        {
-                            img[1 * (y * w + x) + 0] = ba;
-                        } else {
-                            img[1 * (y * w + x) + 0] = fa;
-                        }
+            },
+            (Color::Scalar(ba), Color::Scalar(fa)) => for y in 0..h {
+                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
+                for x in 0..w {
+                    if y_translated < minmax.data[x].min.into() || y_translated > minmax.data[x].max.into() {
+                        img[1 * (y * w + x) + 0] = ba;
+                    } else {
+                        img[1 * (y * w + x) + 0] = fa;
                     }
                 }
-            }
+            },
             _ => {
                 panic!("Color formats of background and foreground are inconsistent!");
             }
