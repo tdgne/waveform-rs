@@ -1,6 +1,6 @@
 # waveform
 
-[crates.io](https://crates.io/crates/waveform), [Documentation](https://docs.rs/waveform/0.1.0/waveform/)
+[crates.io](https://crates.io/crates/waveform), [Documentation](https://docs.rs/waveform/0.1.0/waveform/) [![Build Status](https://travis-ci.org/tdgne/waveform-rs.svg?branch=master)](https://travis-ci.org/tdgne/waveform-rs)
 
 waveform is a set of waveform image renderers written in Rust.
 
