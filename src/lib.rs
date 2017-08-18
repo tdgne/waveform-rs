@@ -16,8 +16,8 @@ mod macros;
 pub mod binned;
 pub use binned::BinnedWaveformRenderer;
 
+#[deprecated]
 pub mod direct;
-pub use direct::DirectWaveformRenderer;
 
 pub mod multi;
 pub use multi::MultiWaveformRenderer;

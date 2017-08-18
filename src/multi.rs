@@ -4,12 +4,28 @@ use std::error::Error;
 use super::misc::*;
 use super::binned::BinnedWaveformRenderer;
 
+/// A renderer that contains multiple `BinnedWaveformRenderer`s
+/// with different bin sizes.
+///
+/// It will automatically choose an apropriate bin size each time
+/// it renders.
 pub struct MultiWaveformRenderer<T: Sample> {
     pub binned: HashMap<usize, BinnedWaveformRenderer<T>>,
     sample_rate: f64,
 }
 
 impl<T: Sample> MultiWaveformRenderer<T> {
+    /// The constructor.
+    ///
+    /// # Arguments
+    ///
+    /// * `samples` - The samples that will be used to calculate binned min / max values.
+    ///               It must also contain the sample rate that is used by
+    ///               `BinnedWaveformRenderer` to render images when given a
+    ///               `TimeRange::Seconds`.
+    /// * `bin_sizes` - The sizes of the bins which the min / max values will be binned
+    ///                into.
+    /// * `config` - See `WaveformConfig`.
     pub fn new(samples: &SampleSequence<T>, bin_sizes: &Vec<usize>, config: WaveformConfig) -> Result<Self, Box<Error>> {
         let mut r = MultiWaveformRenderer{binned: HashMap::new(), sample_rate: samples.sample_rate};
         let mut bss = bin_sizes.clone();
@@ -20,6 +36,14 @@ impl<T: Sample> MultiWaveformRenderer<T> {
         Ok(r)
     }
 
+    /// Renders an image as a `Vec<u8>`.
+    ///
+    /// `None` will be returned if the area of the specified `shape` is equal to zero.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The samples within this `TimeRange` will be rendered.
+    /// * `shape` - The `(width, height)` of the resulting image in pixels.
     pub fn render_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
         let (w, h) = shape;
         if w == 0 || h == 0 {

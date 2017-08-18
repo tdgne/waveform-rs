@@ -12,18 +12,16 @@ pub enum Color {
 }
 
 /// Configurations for image generators.
+///
+/// It contains the following information:
+///
+///  * Range of the amplitudes to be rendered
+///  * Foreground and background `Color`s to be used
 #[derive(Copy, Clone)]
 pub struct WaveformConfig {
-    /// Minimum amplitude to be plotted.
     pub amp_min: f64,
-
-    /// Maximum amplitude to be plotted.
     pub amp_max: f64,
-
-    /// Foreground color of the image, format must be consistent with background.
     foreground: Color,
-
-    /// Background color of the image, format must be consistent with foreground.
     background: Color,
 }
 
@@ -44,6 +42,14 @@ impl WaveformConfig {
 
         Ok(())
     }
+
+    /// The constructor.
+    ///
+    /// # Arguments
+    /// * `amp_min` - Minimum value of amplitude to be rendered 
+    /// * `amp_max` - Maximum value of amplitude to be rendered
+    /// * `foreground` - Foreground `Color` of the image, format must be consistent with background.
+    /// * `background` - Background `Color` of the image, format must be consistent with foreground.
     pub fn new(amp_min: f64, amp_max: f64, foreground: Color, background: Color) -> Result<Self, Box<Error>> {
         match Self::check_color_consistency(background, foreground) {
             Err(e) => return Err(e),
@@ -64,6 +70,12 @@ impl WaveformConfig {
     pub fn get_foreground(&self) -> Color {
         self.foreground
     }
+
+    /// Sets `Color`s.
+    ///
+    /// # Arguments
+    /// * `foreground` - Foreground `Color` of the image, format must be consistent with background.
+    /// * `background` - Background `Color` of the image, format must be consistent with foreground.
     pub fn set_colors(&mut self, background: Color, foreground: Color) -> Result<(), Box<Error>> {
         match Self::check_color_consistency(background, foreground) {
             Err(e) => return Err(e),
@@ -103,13 +115,14 @@ where
 {
 }
 
-/// A sequence of `Sample`s (a wave) combined with sample rate information.
+/// A reference to a `slice` of `Sample`s
+/// (which describe a wave) combined with its sample rate.
 pub struct SampleSequence<'a, T: Sample + 'a> {
     pub data: &'a [T],
     pub sample_rate: f64,
 }
 
-/// A pair of a minimum and maximum amplitude value for internal use.
+/// A pair of a minimum and maximum amplitude values for internal use.
 #[derive(Copy, Clone)]
 pub struct MinMaxPair<T: Sample> {
     pub min: T,

@@ -78,12 +78,14 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
     }
 
 
-    /// Generates an image as a `Vec<u8>`.
+    /// Renders an image as a `Vec<u8>`.
+    ///
+    /// `None` will be returned if the area of the specified `shape` is equal to zero.
     ///
     /// # Arguments
     ///
     /// * `range` - The samples within this `TimeRange` will be rendered.
-    /// * `shape` - The `(width, height)` of the resulting image.
+    /// * `shape` - The `(width, height)` of the resulting image in pixels.
     pub fn render_vec(&self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
         let (w, h) = shape;
         if w == 0 || h == 0 {
