@@ -1,26 +1,41 @@
 extern crate waveform;
+
+#[cfg(feature = "example-gui")]
 extern crate gtk;
+#[cfg(feature = "example-gui")]
 extern crate gdk_pixbuf;
 
 use waveform::*;
 use waveform::direct::*;
+
+#[cfg(feature = "example-gui")]
 use gtk::{ContainerExt, Image, Inhibit, WidgetExt, Window, WindowExt, WindowType};
+#[cfg(feature = "example-gui")]
 use gdk_pixbuf::Pixbuf;
 
 fn main() {
     // Whether to use BinnedWaveformRenderer or DirectWaveformRenderer
     let use_binned = true;
 
-    if gtk::init().is_err() {
-        panic!("Failed to initialize gtk.");
+    #[cfg(feature = "example-gui")]
+    {
+        if gtk::init().is_err() {
+            panic!("Failed to initialize gtk.");
+        }
     }
+
+    #[cfg(feature = "example-gui")]
     let window = Window::new(WindowType::Toplevel);
-    window.set_title("A simple waveform renderer test");
-    window.set_default_size(800, 100);
-    window.connect_delete_event(|_, _| {
-        gtk::main_quit();
-        Inhibit(false)
-    });
+    #[cfg(feature = "example-gui")]
+    {
+        window.set_title("A simple waveform renderer test");
+        window.set_default_size(800, 100);
+        window.connect_delete_event(|_, _| {
+            gtk::main_quit();
+            Inhibit(false)
+        });
+    }
+
     let mut samples: Vec<f64> = Vec::new();
     for t in 0..44100 {
         samples.push(
@@ -62,9 +77,12 @@ fn main() {
         vec = wfg.render_vec(&samples, (800, 100)).unwrap();
     }
 
-    let pixbuf = Pixbuf::new_from_vec(vec, 0, true, 8, 800, 100, 800 * 4);
-    let image = Image::new_from_pixbuf(Some(&pixbuf));
-    window.add(&image);
-    window.show_all();
-    gtk::main();
+    #[cfg(feature = "example-gui")]
+    {
+        let pixbuf = Pixbuf::new_from_vec(vec, 0, true, 8, 800, 100, 800 * 4);
+        let image = Image::new_from_pixbuf(Some(&pixbuf));
+        window.add(&image);
+        window.show_all();
+        gtk::main();
+    }
 }
