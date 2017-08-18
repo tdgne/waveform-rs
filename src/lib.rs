@@ -1,5 +1,6 @@
 //! Waveform image renderes meant to be used for audio visualization.
 
+#[cfg(feature="rlibc")]
 extern crate rlibc;
 
 pub mod error;

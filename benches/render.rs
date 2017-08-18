@@ -40,13 +40,13 @@ fn gen_config() -> WaveformConfig {
 fn bench_binned(b: &mut Bencher) {
     let width = 1000usize; // The width of the rendered image.
     let height = 100usize; // The height of the rendered image.
-    let bin_size = 10usize; // Bin size for BinnedWaveformRenderer
+    let bin_size = 100usize; // Bin size for BinnedWaveformRenderer
 
     let samples: Vec<f64> = gen_samples();
 
     let config = gen_config();
 
-    let mut wfg = BinnedWaveformRenderer::new(
+    let mut wfr = BinnedWaveformRenderer::new(
             &SampleSequence {
                 data: &samples[..],
                 sample_rate: 44100f64,
@@ -57,6 +57,6 @@ fn bench_binned(b: &mut Bencher) {
 
 
     b.iter(|| {
-        wfg.render_vec(TimeRange::Seconds(0f64, 10f64), (width, height));
+        wfr.render_vec(TimeRange::Seconds(0f64, 10f64), (width, height));
     });
 }

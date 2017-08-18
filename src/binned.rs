@@ -2,6 +2,12 @@ use std::error::Error;
 use std::cmp;
 use error::InvalidSizeError;
 use misc::*;
+
+
+#[cfg(not(feature="rlibc"))]
+use std::io::Write;
+
+#[cfg(feature="rlibc")]
 use rlibc;
 
 
@@ -159,27 +165,42 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                     => {
                         let bg_colors: [u8; 4] = [br, bg, bb, ba];
                         let fg_colors: [u8; 4] = [fr, fg, fb, fa];
+
+                        #[cfg(feature="rlibc")]
                         unsafe {
                             for y in 0..max_translated {
-                                    rlibc::memcpy(
-                                        &mut pixel!(img[w, h, 4; x, y, 0]) as _,
-                                        &bg_colors[0] as _,
-                                        4
-                                        );
+                                rlibc::memcpy(
+                                    &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                    &bg_colors[0] as _,
+                                    4
+                                    );
                             }
                             for y in max_translated..min_translated {
-                                    rlibc::memcpy(
-                                        &mut pixel!(img[w, h, 4; x, y, 0]) as _,
-                                        &fg_colors[0] as _,
-                                        4
-                                        );
+                                rlibc::memcpy(
+                                    &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                    &fg_colors[0] as _,
+                                    4
+                                    );
                             }
                             for y in min_translated..h {
-                                    rlibc::memcpy(
-                                        &mut pixel!(img[w, h, 4; x, y, 0]) as _,
-                                        &bg_colors[0] as _,
-                                        4
-                                        );
+                                rlibc::memcpy(
+                                    &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                    &bg_colors[0] as _,
+                                    4
+                                    );
+                            }
+                        }
+
+                        #[cfg(not(feature="rlibc"))]
+                        {
+                            for y in 0..max_translated {
+                                (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&bg_colors).unwrap();
+                            }
+                            for y in max_translated..min_translated {
+                                (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&fg_colors).unwrap();
+                            }
+                            for y in min_translated..h {
+                                (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&bg_colors).unwrap();
                             }
                         }
                     },
