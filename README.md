@@ -1,9 +1,10 @@
 # waveform
 
-waveform is a set of (currently two) waveform image renderers written in Rust.
-It is speed-oriented for heavy use.
+[crates.io](https://crates.io/crates/waveform), [Documentation](https://docs.rs/waveform/0.1.0/waveform/)
 
-This lib currently has no backends, so it directly renders to a `Vec<u8>`.
+waveform is a set of waveform image renderers written in Rust.
+
+It is speed-oriented for heavy use.
 
 ## Features
 
@@ -11,9 +12,17 @@ This lib currently has no backends, so it directly renders to a `Vec<u8>`.
   * `RGBA` format images
   * Gray scale (`Scalar`) images for use as masks etc.
 * Fast rendering from binned min/max amplitudes
-* Multilevel binning for rendering in various resolutions.
+* Multilevel binning for rendering in various resolutions
 * Time-range specification in either seconds (`f64`) or samples (`usize`)
 
+## Some TODOs
+
+* Direct writing into given slices
+* Cached rendering
+* Guarantee thread safety (it probably is...)
+* Memory/time optimizations
+
+Requests and contributions are welcome!
 
 ## Screenshot
 
