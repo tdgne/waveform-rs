@@ -33,10 +33,15 @@ impl<T: Sample> MultiWaveformRenderer<T> {
         };
         let mut bss = bin_sizes.clone();
         bss.sort();
+
+        // TODO: This is obviously improvable if we use the 
+        // result for smaller bin sizes for calculating the
+        // larger bin sizes.
         for bs in bss.iter() {
             r.binned
                 .insert(*bs, try!(BinnedWaveformRenderer::new(samples, *bs, config)));
         }
+
         Ok(r)
     }
 

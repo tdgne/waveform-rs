@@ -159,8 +159,7 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                     ),
                 );
 
-            // The following part intensively uses macros.
-            // See src/macros/*.rs for their defenitions.
+            // Putting this `match` outside for loops improved the speed.
             match (self.config.get_background(), self.config.get_foreground()) {
                 (
                     Color::RGBA {
@@ -176,8 +175,23 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                         a: fa,
                     },
                 ) => {
+
+                    // Order the RGBA values so we can directly
+                    // copy them into the image.
                     let bg_colors: [u8; 4] = [br, bg, bb, ba];
                     let fg_colors: [u8; 4] = [fr, fg, fb, fa];
+
+                    // Each `flipping_three_segment_for` macro
+                    // will be expanded into three for loops below.
+                    //
+                    // I could have used just one for loop (and I did once)
+                    // but this made a significant difference in
+                    // the performance.
+                    //
+                    // The `pixel` macro is used to access pixels.
+                    //
+                    // See src/macros/*.rs for the defenitions.
+
 
                     #[cfg(feature = "rlibc")]
                     unsafe {
@@ -197,6 +211,9 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                             }
                     }
 
+                    // A similar implementation is possible without
+                    // the rlibc crate, but it appeared to be
+                    // slightly slower.
                     #[cfg(not(feature = "rlibc"))]
                     {
                         flipping_three_segment_for!{
@@ -217,7 +234,11 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                                 }
                             }
                 }
-                (_, _) => unreachable!(),
+
+                // This case is unreachable because inconsistent
+                // `Color` formats are checked whenever a user
+                // creates a `WaveformConfig`.
+                (_, _) => unreachable!(), 
             }
         }
 
