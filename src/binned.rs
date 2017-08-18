@@ -84,19 +84,7 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
     ///
     /// * `range` - The samples within this `TimeRange` will be rendered.
     /// * `shape` - The `(width, height)` of the resulting image.
-    pub fn render_vec(&mut self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
-        let mut bg_is_scalar = false;
-        let mut fg_is_scalar = false;
-        if let Color::Scalar(_) = self.config.background {
-            bg_is_scalar = true;
-        }
-        if let Color::Scalar(_) = self.config.foreground {
-            fg_is_scalar = true;
-        }
-        if bg_is_scalar ^ fg_is_scalar {
-            panic!("Color formats of background and foreground are inconsistent!");
-        }
-
+    pub fn render_vec(&self, range: TimeRange, shape: (usize, usize)) -> Option<Vec<u8>> {
         let (w, h) = shape;
         if w == 0 || h == 0 {
             return None;
@@ -160,9 +148,8 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             let max_translated: usize = h - cmp::max(0, cmp::min(h, ((max.into() - self.config.amp_min) * scale).floor() as usize));
 
             // The following part intensively uses macros.
-            // See segment_for.rs for flipping_three_segment_for! and
-            // misc.rs for pixel! for their defenitions.
-            match (self.config.background, self.config.foreground) {
+            // See src/macros/*.rs for their defenitions.
+            match (self.config.get_background(), self.config.get_foreground()) {
                 (Color::RGBA{r:br, g:bg, b:bb, a:ba}, Color::RGBA{r:fr, g:fg, b:fb, a:fa})
                     => {
                         let bg_colors: [u8; 4] = [br, bg, bb, ba];

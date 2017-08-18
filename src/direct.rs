@@ -51,7 +51,7 @@ impl DirectWaveformRenderer {
         // because it's faster this way.
         // I've also tried it in BinnedWaveformRenderer but it didn't make a
         // significant improvement in speed, so it's left that way.
-        match (self.config.background, self.config.foreground) {
+        match (self.config.get_background(), self.config.get_foreground()) {
             (
                 Color::RGBA {
                     r: br,

@@ -18,22 +18,21 @@ fn gen_samples() -> Vec<f64> {
 }
 
 fn gen_config() -> WaveformConfig {
-    WaveformConfig {
-        amp_max: 1f64,
-        amp_min: -1f64,
-        background: Color::RGBA {
+    WaveformConfig::new(
+        -1f64, 1f64,
+        Color::RGBA {
             r: 0,
             g: 0,
             b: 0,
             a: 255,
         },
-        foreground: Color::RGBA {
+        Color::RGBA {
             r: 0,
             g: 0,
             b: 0,
             a: 0,
-        },
-    }
+        }
+    ).unwrap()
 }
 
 #[bench]
@@ -46,7 +45,7 @@ fn bench_binned(b: &mut Bencher) {
 
     let config = gen_config();
 
-    let mut wfr = BinnedWaveformRenderer::new(
+    let wfr = BinnedWaveformRenderer::new(
             &SampleSequence {
                 data: &samples[..],
                 sample_rate: 44100f64,

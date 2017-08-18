@@ -18,22 +18,21 @@ fn main() {
         );
     }
 
-    let config = WaveformConfig {
-        amp_max: 1f64,
-        amp_min: -1f64,
-        background: Color::RGBA {
+    let config = WaveformConfig::new(
+        -1f64, 1f64,
+        Color::RGBA {
             r: 0,
             g: 0,
             b: 0,
             a: 255,
         },
-        foreground: Color::RGBA {
+        Color::RGBA {
             r: 0,
             g: 0,
             b: 0,
             a: 0,
-        },
-    };
+        }
+    ).unwrap();
 
     // Multilevel binned version
     {

@@ -19,3 +19,16 @@ impl Error for InvalidSizeError {
 }
 
 
+#[derive(Debug)]
+pub struct InconsistentFormatError;
+
+impl fmt::Display for InconsistentFormatError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Color formats of background and foreground must be consistent.")
+    }
+}
+impl Error for InconsistentFormatError {
+    fn description(&self) -> &str {
+        "Color formats of background and foreground must be consistent."
+    }
+}

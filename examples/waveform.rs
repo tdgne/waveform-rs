@@ -28,22 +28,21 @@ fn main() {
         );
     }
 
-    let config = WaveformConfig {
-        foreground: Color::RGBA {
+    let config = WaveformConfig::new(
+        -1f64, 1f64,
+        Color::RGBA {
             r: 0,
             g: 0,
             b: 0,
             a: 255,
         },
-        background: Color::RGBA {
+        Color::RGBA {
             r: 0,
             g: 0,
             b: 0,
             a: 0,
-        },
-        amp_min: -1f64,
-        amp_max: 1f64,
-    };
+        }
+    ).unwrap();
 
     let vec: Vec<u8>;
     if use_binned {

@@ -1,4 +1,6 @@
 use zero::Zero;
+use error::InconsistentFormatError;
+use std::error::Error;
 
 /// Color specifiers.
 #[derive(Copy, Clone)]
@@ -19,10 +21,60 @@ pub struct WaveformConfig {
     pub amp_max: f64,
 
     /// Foreground color of the image, format must be consistent with background.
-    pub foreground: Color,
+    foreground: Color,
 
     /// Background color of the image, format must be consistent with foreground.
-    pub background: Color,
+    background: Color,
+}
+
+impl WaveformConfig {
+    fn check_color_consistency(c1: Color, c2: Color) -> Result<(), Box<InconsistentFormatError>> {
+        let mut c1_is_scalar = false;
+        let mut c2_is_scalar = false;
+        if let Color::Scalar(_) = c1 {
+            c1_is_scalar = true;
+        }
+        if let Color::Scalar(_) = c2 {
+            c2_is_scalar = true;
+        }
+
+        if c1_is_scalar ^ c2_is_scalar {
+            return Err(Box::new(InconsistentFormatError));
+        }
+
+        Ok(())
+    }
+    pub fn new(amp_min: f64, amp_max: f64, foreground: Color, background: Color) -> Result<Self, Box<Error>> {
+        match Self::check_color_consistency(background, foreground) {
+            Err(e) => return Err(e),
+            _ => (),
+        }
+
+        Ok(Self{
+            amp_min,
+            amp_max,
+            background,
+            foreground,
+        })
+    }
+
+    pub fn get_background(&self) -> Color {
+        self.background
+    }
+    pub fn get_foreground(&self) -> Color {
+        self.foreground
+    }
+    pub fn set_colors(&mut self, background: Color, foreground: Color) -> Result<(), Box<Error>> {
+        match Self::check_color_consistency(background, foreground) {
+            Err(e) => return Err(e),
+            _ => (),
+        }
+
+        self.background = background;
+        self.foreground = foreground;
+
+        Ok(())
+    }
 }
 
 impl Default for WaveformConfig {
