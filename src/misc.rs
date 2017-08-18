@@ -25,6 +25,17 @@ pub struct WaveformConfig {
     pub background: Color,
 }
 
+impl Default for WaveformConfig {
+    fn default() -> Self {
+        Self {
+            amp_min: -1f64,
+            amp_max: 1f64,
+            foreground: Color::Scalar(255),
+            background: Color::Scalar(0),
+        }
+    }
+}
+
 /// Time range specifiers used to determine which part of the wave to plot.
 #[derive(Copy, Clone)]
 pub enum TimeRange {
@@ -56,42 +67,4 @@ pub struct MinMaxPair<T: Sample> {
 pub struct MinMaxPairSequence<T: Sample> {
     pub data: Vec<MinMaxPair<T>>,
 }
-
-/// Utility macro for accessing pixels
-macro_rules! pixel_pos {
-    (H ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr)
-        => ((($x + $y * $w) * $l + $i));
-
-    (V ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr)
-        => ((($y + $x * $h) * $l + $i));
-
-    ($orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i1:expr => $i2:expr)
-        => (pixel_pos!($orientation; $w, $h, $l; $x, $y, $i1) .. pixel_pos!($orientation; $w, $h, $l; $x, $y, $i2));
-}
-
-macro_rules! pixel {
-    ($name:ident [ $orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr ])
-        => ($name[pixel_pos!($orientation; $w, $h, $l; $x, $y, $i)]);
-
-    ($name:ident [ $orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i1:expr => $i2:expr ])
-        => ($name[pixel_pos!($orientation; $w, $h, $l; $x, $y, $i1 => $i2)]);
-
-
-    ($name:ident [ $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr ])
-        => (pixel!($name[H; $w, $h, $l; $x, $y, $i]));
-
-    ($name:ident [ $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i1:expr => $i2:expr ])
-        => (pixel!($name[H; $w, $h, $l; $x, $y, $i1 => $i2]));
-
-
-    ($name:ident [ H ; $w:expr, $h:expr ; $x:expr , $y:expr ])
-        => (pixel!($name[H; $w, $h, 1; $x, $y, 0]));
-    
-    ($name:ident [ V ; $w:expr, $h:expr ; $x:expr , $y:expr ])
-        => (pixel!($name[V; $w, $h, 1; $x, $y, 0]));
-
-    ($name:ident [ $w:expr, $h:expr ; $x:expr , $y:expr ])
-        => (pixel!($name[H; $w, $h; $x, $y]));
-}
-
 

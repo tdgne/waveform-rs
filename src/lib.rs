@@ -7,9 +7,11 @@ pub mod error;
 
 pub mod zero;
 
-#[macro_use]
 pub mod misc;
 pub use misc::{SampleSequence, WaveformConfig, Color, TimeRange, Sample};
+
+#[macro_use]
+mod macros;
 
 pub mod binned;
 pub use binned::BinnedWaveformRenderer;

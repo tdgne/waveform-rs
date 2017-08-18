@@ -3,7 +3,6 @@ use std::cmp;
 use error::InvalidSizeError;
 use misc::*;
 
-
 #[cfg(not(feature="rlibc"))]
 use std::io::Write;
 
@@ -160,6 +159,9 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             let min_translated: usize = h - cmp::max(0, cmp::min(h, ((min.into() - self.config.amp_min) * scale).floor() as usize));
             let max_translated: usize = h - cmp::max(0, cmp::min(h, ((max.into() - self.config.amp_min) * scale).floor() as usize));
 
+            // The following part intensively uses macros.
+            // See segment_for.rs for flipping_three_segment_for! and
+            // misc.rs for pixel! for their defenitions.
             match (self.config.background, self.config.foreground) {
                 (Color::RGBA{r:br, g:bg, b:bb, a:ba}, Color::RGBA{r:fr, g:fg, b:fb, a:fa})
                     => {
@@ -168,53 +170,40 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
 
                         #[cfg(feature="rlibc")]
                         unsafe {
-                            for y in 0..max_translated {
-                                rlibc::memcpy(
-                                    &mut pixel!(img[w, h, 4; x, y, 0]) as _,
-                                    &bg_colors[0] as _,
-                                    4
-                                    );
-                            }
-                            for y in max_translated..min_translated {
-                                rlibc::memcpy(
-                                    &mut pixel!(img[w, h, 4; x, y, 0]) as _,
-                                    &fg_colors[0] as _,
-                                    4
-                                    );
-                            }
-                            for y in min_translated..h {
-                                rlibc::memcpy(
-                                    &mut pixel!(img[w, h, 4; x, y, 0]) as _,
-                                    &bg_colors[0] as _,
-                                    4
-                                    );
+                            flipping_three_segment_for!{
+                                for y in 0, max_translated, min_translated, h, {
+                                        rlibc::memcpy(
+                                            &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                            &bg_colors[0] as _,
+                                            4
+                                            ),
+                                        rlibc::memcpy(
+                                            &mut pixel!(img[w, h, 4; x, y, 0]) as _,
+                                            &fg_colors[0] as _,
+                                            4
+                                            )
+                                }
                             }
                         }
 
                         #[cfg(not(feature="rlibc"))]
                         {
-                            for y in 0..max_translated {
-                                (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&bg_colors).unwrap();
-                            }
-                            for y in max_translated..min_translated {
-                                (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&fg_colors).unwrap();
-                            }
-                            for y in min_translated..h {
-                                (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&bg_colors).unwrap();
+                            flipping_three_segment_for!{
+                                for y in 0, max_translated, min_translated, h, {
+                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&bg_colors).unwrap(),
+                                    (&mut pixel!(img[w, h, 4; x, y, 0 => 4])).write(&fg_colors).unwrap()
+                                }
                             }
                         }
                     },
                 (Color::Scalar(ba), Color::Scalar(fa))
                     => {
-                        for y in 0..max_translated {
-                            pixel!(img[w, h; x, y]) = ba;
-                        }
-                        for y in max_translated..min_translated {
-                            pixel!(img[w, h; x, y]) = fa;
-                        }
-                        for y in min_translated..h {
-                            pixel!(img[w, h; x, y]) = ba;
-                        }
+                            flipping_three_segment_for!{
+                                for y in 0, max_translated, min_translated, h, {
+                                    pixel!(img[w, h; x, y]) = ba,
+                                    pixel!(img[w, h; x, y]) = fa
+                                }
+                            }
                     },
                 (_, _) => unreachable!(),
             }
