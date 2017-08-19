@@ -311,3 +311,45 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
         self.sample_rate
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::BinnedWaveformRenderer;
+    use ::misc::*;
+
+    #[test]
+    fn render_vec_and_write_eq() {
+        let tr = TimeRange::Seconds(0f64, 10f64);
+        let (width, height) = (1000, 100);
+        let mut samples: Vec<f64> = Vec::new();
+        for t in 0u32..44100u32 {
+            samples.push(((t as f64) * 0.01f64 * 2f64 * 3.1415f64).sin());
+        }
+        let config = WaveformConfig::new(
+            -1f64,
+            1f64,
+            Color::RGBA {
+                r: 0, g: 0, b: 0, a: 255,
+            },
+            Color::RGBA {
+                r: 0, g: 0, b: 0, a: 255,
+            },
+            ).unwrap();
+        let wfr = BinnedWaveformRenderer::new(
+            &SampleSequence {
+                data: &samples[..],
+                sample_rate: 44100f64,
+            },
+            10,
+            config,
+        ).unwrap();
+
+        let v1 = wfr.render_vec(tr, (width, height)).unwrap();
+
+        let mut v2: Vec<u8> = vec![0; width*height*4];
+
+        wfr.render_write(tr, (0, 0), (width, height), &mut v2[..], (width, height)).unwrap();
+
+        assert_eq!(v1, v2);
+    }
+}

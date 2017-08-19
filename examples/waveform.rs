@@ -93,7 +93,7 @@ fn main() {
     // The renderer doesn't look at the actual audio samples here.
     // Instead it will use the binned min/max values calculated above,
     // making the rendering quite faster.
-    let mut vec: Vec<u8> =
+    let vec: Vec<u8> =
         wfg.render_vec(TimeRange::Seconds(0.0f64, 1.0f64), (800, 100))
         .unwrap();
 
