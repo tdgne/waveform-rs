@@ -54,9 +54,10 @@ fn bench_binned_vec(b: &mut Bencher) {
         config.clone(),
     ).unwrap();
 
+    let mut vec: Vec<u8> = Vec::new();
 
     b.iter(|| {
-        wfr.render_vec(TimeRange::Seconds(0f64, 10f64), (width, height));
+        vec = wfr.render_vec(TimeRange::Seconds(0f64, 10f64), (width, height)).unwrap();
     });
 }
 
