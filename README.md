@@ -33,7 +33,7 @@ cargo run --features "example-gui" --example binned
 ```sh
 # The same but by using a MultiWaveformRenderer, which is
 # a combination of multiple BinnedWaveformRenderers.
-cargo run --features "example-gui" --example binned
+cargo run --features "example-gui" --example multi
 ```
 
 ![examples/waveform.rs](https://user-images.githubusercontent.com/29127111/27250722-dd579ff6-5370-11e7-99c2-7dc3e7705c14.png)
