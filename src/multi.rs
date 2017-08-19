@@ -100,6 +100,8 @@ impl<T: Sample> MultiWaveformRenderer<T> {
     /// It will raise an error if
     ///
     /// * the area of the specified `shape` is equal to zero.
+    /// * either the width or height of the `shape` exceeds that of the `full_shape`
+    ///   of `img`.
     /// * the length of `img` is not long enough to contain the result.
     ///   `(offsets.0 + shape.0) * (offsets.1 + shape.1) * (Bytes per pixel) <= img.len()`
     ///   must be satisfied.
@@ -107,12 +109,15 @@ impl<T: Sample> MultiWaveformRenderer<T> {
     /// # Arguments
     ///
     /// * `range` - The samples within this `TimeRange` will be rendered.
-    /// * `offsets` - The `(x-offset, y-offset)` of the resulting image in pixels.
+    /// * `offsets` - The `(x-offset, y-offset)` of the part of the `img` that is
+    ///               going to be overwritten in in pixels.
     ///               Specifies the starting position to write into `img`.
-    /// * `shape` - The `(width, height)` of the resulting image in pixels.
+    /// * `shape` - The `(width, height)` of the part of the `img` that is going 
+    ///             to be overwritten in pixels.
     /// * `img`   - A mutable reference to the slice to write the result into.
+    /// * `full_shape` - The `(width, height)` of the whole `img` in pixels.
     ///
-    pub fn render_write(&mut self, range: TimeRange, offsets: (usize, usize), shape: (usize, usize), img: &mut [u8]) -> Result<(), Box<Error>> {
+    pub fn render_write(&mut self, range: TimeRange, offsets: (usize, usize), shape: (usize, usize), img: &mut [u8], full_shape: (usize, usize)) -> Result<(), Box<Error>> {
         let (begin, end) = range.to_sample_tuple(self.sample_rate);
 
         let samples_per_pixel = ((end - begin) as f64) / (shape.0 as f64);
@@ -121,7 +126,7 @@ impl<T: Sample> MultiWaveformRenderer<T> {
             return self.binned
                 .get_mut(&bin_size)
                 .unwrap()
-                .render_write(range, offsets, shape, img);
+                .render_write(range, offsets, shape, img, full_shape);
         }else{
             return Err(Box::new(InvalidSizeError{var_name: "bin sizes".to_string()}));
         }

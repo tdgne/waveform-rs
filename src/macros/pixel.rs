@@ -1,10 +1,10 @@
 // Utility macro for accessing pixels
 macro_rules! pixel_pos {
     (H ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr)
-        => ((($x + $y * $w) * $l + $i));
+        => (((($x) + ($y) * ($w)) * ($l) + ($i)));
 
     (V ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i:expr)
-        => ((($y + $x * $h) * $l + $i));
+        => (((($y) + ($x) * ($h)) * ($l) + ($i)));
 
     ($orientation:ident ; $w:expr, $h:expr, $l:expr ; $x:expr , $y:expr , $i1:expr => $i2:expr)
         => (pixel_pos!($orientation; $w, $h, $l; $x, $y, $i1) ..  pixel_pos!($orientation; $w, $h, $l; $x, $y, $i2));
