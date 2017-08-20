@@ -2,6 +2,7 @@ use std::error::Error;
 use std::cmp;
 use error::InvalidSizeError;
 use misc::*;
+use std::time::SystemTime;
 
 #[cfg(not(feature = "rlibc"))]
 use std::io::Write;
@@ -10,7 +11,9 @@ use std::io::Write;
 use rlibc;
 
 #[cfg(feature = "ocl")]
-use ocl::{util, ProQue, Buffer, MemFlags};
+use ocl::{util, ProQue, Buffer, MemFlags, EventList};
+use ocl::ffi::{cl_event, cl_int};
+use libc::c_void;
 
 #[cfg(feature = "ocl")]
 use std::mem;
@@ -107,6 +110,8 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
     }
 
     pub fn render_write_ocl(&self, range: TimeRange, offsets: (usize, usize), shape: (usize, usize), img: &mut [u8], full_shape: (usize, usize)) -> Result<(), Box<Error>> {
+        let mut t_start = SystemTime::now();
+
         let (w, h) = shape;
         if w == 0 || h == 0 {
             return Err(Box::new(InvalidSizeError{var_name: "shape".to_string()}));
@@ -150,6 +155,9 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
         let end_bin_idx: usize = cmp::min(self.minmax.data.len(), end / self.bin_size);
         let mut min_src: Vec<f32> = Vec::with_capacity(self.minmax.data.len());
         let mut max_src: Vec<f32> = Vec::with_capacity(self.minmax.data.len());
+
+        println!("Common stuff: {} ns", t_start.elapsed().unwrap().subsec_nanos());
+
         for i in 0..self.minmax.data.len() {
             min_src.push(self.minmax.data[i].min.into() as f32);
             max_src.push(self.minmax.data[i].max.into() as f32);
@@ -171,12 +179,16 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             }
         }
 
+        println!("GPU-specific preparation: {} ns", t_start.elapsed().unwrap().subsec_nanos());
+
         static KERNEL_SRC: &'static str = include_str!("ocl_kernel.c");
 
         let ocl_pq = ProQue::builder()
             .src(KERNEL_SRC)
             .dims(w)
             .build().expect("Build ProQue");
+
+        println!("Kernel build: {} ns", t_start.elapsed().unwrap().subsec_nanos());
 
         let offsets_src_buffer = Buffer::builder()
             .queue(ocl_pq.queue().clone())
@@ -205,6 +217,8 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             .dims(w*h*4)
             .build().unwrap();
 
+        println!("Buffer-allocation: {} ns", t_start.elapsed().unwrap().subsec_nanos());
+
         let scale: f32 = 1f32 / ((self.config.amp_max - self.config.amp_min) as f32) * (h as f32);
 
         let kern = ocl_pq.create_kernel("render_waveform").unwrap()
@@ -218,9 +232,29 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             .arg_buf(&max_src_buffer)
             .arg_buf(&result_buffer);
 
-        kern.enq().unwrap();
+        let mut kernel_event = EventList::new();
 
-        result_buffer.read(img).enq().unwrap();
+        extern fn _test_events(event: cl_event, status: cl_int, user_data: *mut c_void) {
+            let t_start: SystemTime;
+            unsafe{
+                t_start = *(user_data as *mut SystemTime);
+            }
+            println!("{}", t_start.elapsed().unwrap().subsec_nanos());
+        }
+
+        println!("arg_* stuff: {} ns", t_start.elapsed().unwrap().subsec_nanos());
+
+        let kq = kern.cmd().enew(&mut kernel_event).enq().unwrap();
+
+        unsafe {
+            kernel_event.last().unwrap().set_callback(_test_events, &mut t_start as *mut _ as *mut c_void).unwrap();
+        }
+
+        println!("After kernel enq: {} ns", t_start.elapsed().unwrap().subsec_nanos());
+
+        let rq = result_buffer.read(img).enq().unwrap();
+
+        println!("After read enq: {} ns", t_start.elapsed().unwrap().subsec_nanos());
 
         Ok(())
     }

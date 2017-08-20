@@ -5,6 +5,7 @@ extern crate rlibc;
 
 #[cfg(feature = "ocl")]
 extern crate ocl;
+extern crate libc;
 
 pub mod error;
 
