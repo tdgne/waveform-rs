@@ -9,6 +9,12 @@ use std::io::Write;
 #[cfg(feature = "rlibc")]
 use rlibc;
 
+#[cfg(feature = "ocl")]
+use ocl::{util, ProQue, Buffer, MemFlags};
+
+#[cfg(feature = "ocl")]
+use std::mem;
+
 
 /// A fast "binned" waveform renderer.
 ///
@@ -94,10 +100,132 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             Color::Scalar(_) => vec![0u8; w * h],
         };
         
-        self.render_write(range, (0, 0), shape, &mut img[..], shape).unwrap();
+        //self.render_write(range, (0, 0), shape, &mut img[..], shape).unwrap();
+        self.render_write_ocl(range, (0, 0), shape, &mut img[..], shape).unwrap();
 
         Some(img)
     }
+
+    pub fn render_write_ocl(&self, range: TimeRange, offsets: (usize, usize), shape: (usize, usize), img: &mut [u8], full_shape: (usize, usize)) -> Result<(), Box<Error>> {
+        let (w, h) = shape;
+        if w == 0 || h == 0 {
+            return Err(Box::new(InvalidSizeError{var_name: "shape".to_string()}));
+        }
+
+        let (fullw, fullh) = full_shape;
+        if fullw < w || fullh < h {
+            return Err(Box::new(InvalidSizeError{var_name: "shape and/or full_shape".to_string()}));
+        }
+
+        let (offx, offy) = offsets;
+
+        // Check if we have enough bytes in `img`
+        match self.config.get_background() {
+            Color::RGBA{..} => {
+                if (offx + w) * (offy + h) * 4 > img.len() {
+                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
+                }
+            },
+            Color::Scalar(_) => {
+                if (offx + w) * (offy + h) > img.len() {
+                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
+                }
+            }
+        }
+
+        let (begin, end) = match range {
+            TimeRange::Seconds(b, e) => (
+                (b * self.sample_rate) as usize,
+                (e * self.sample_rate) as usize,
+            ),
+            TimeRange::Samples(b, e) => (b, e),
+        };
+        let nb_samples = end - begin;
+        let samples_per_pixel = (nb_samples as f64) / (w as f64);
+        let bins_per_pixel = samples_per_pixel / (self.bin_size as f64);
+        let bins_per_pixel_floor = bins_per_pixel.floor() as u32;
+        let bins_per_pixel_ceil = bins_per_pixel.ceil() as u32;
+
+        let begin_bin_idx: usize = begin / self.bin_size;
+        let end_bin_idx: usize = cmp::min(self.minmax.data.len(), end / self.bin_size);
+        let mut min_src: Vec<f32> = Vec::with_capacity(self.minmax.data.len());
+        let mut max_src: Vec<f32> = Vec::with_capacity(self.minmax.data.len());
+        for i in 0..self.minmax.data.len() {
+            min_src.push(self.minmax.data[i].min.into() as f32);
+            max_src.push(self.minmax.data[i].max.into() as f32);
+        }
+
+        let mut offsets_src: Vec<u32> = Vec::with_capacity(w+1);
+        let mut cumsum = 0u32;
+        for i in 0..(w+1) {
+            offsets_src.push(cumsum);
+
+            if i == w {
+                break;
+            }
+
+            if (cumsum as f64 / w as f64) < bins_per_pixel {
+                cumsum += bins_per_pixel_ceil;
+            }else{
+                cumsum += bins_per_pixel_floor;
+            }
+        }
+
+        static KERNEL_SRC: &'static str = include_str!("ocl_kernel.c");
+
+        let ocl_pq = ProQue::builder()
+            .src(KERNEL_SRC)
+            .dims(w)
+            .build().expect("Build ProQue");
+
+        let offsets_src_buffer = Buffer::builder()
+            .queue(ocl_pq.queue().clone())
+            .flags(MemFlags::new().read_write().copy_host_ptr())
+            .dims(w + 1)
+            .host_data(&offsets_src[..])
+            .build().unwrap();
+
+        let min_src_buffer = Buffer::builder()
+            .queue(ocl_pq.queue().clone())
+            .flags(MemFlags::new().read_write().copy_host_ptr())
+            .dims(end_bin_idx - begin_bin_idx)
+            .host_data(&min_src[..])
+            .build().unwrap();
+
+        let max_src_buffer = Buffer::builder()
+            .queue(ocl_pq.queue().clone())
+            .flags(MemFlags::new().read_only().copy_host_ptr())
+            .dims(end_bin_idx - begin_bin_idx)
+            .host_data(&max_src[..])
+            .build().unwrap();
+
+        let result_buffer: Buffer<u8> = Buffer::builder()
+            .queue(ocl_pq.queue().clone())
+            .flags(MemFlags::new().read_write().host_read_only())
+            .dims(w*h*4)
+            .build().unwrap();
+
+        let scale: f32 = 1f32 / ((self.config.amp_max - self.config.amp_min) as f32) * (h as f32);
+
+        let kern = ocl_pq.create_kernel("render_waveform").unwrap()
+            .arg_scl(w)
+            .arg_scl(h)
+            .arg_scl(scale)
+            .arg_scl(self.config.amp_min)
+            .arg_scl(self.config.amp_max)
+            .arg_buf(&offsets_src_buffer)
+            .arg_buf(&min_src_buffer)
+            .arg_buf(&max_src_buffer)
+            .arg_buf(&result_buffer);
+
+        kern.enq().unwrap();
+
+        result_buffer.read(img).enq().unwrap();
+
+        Ok(())
+    }
+
+
 
     /// Writes the image into a mutable reference to a slice.
     ///

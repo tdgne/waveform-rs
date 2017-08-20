@@ -3,6 +3,9 @@
 #[cfg(feature = "rlibc")]
 extern crate rlibc;
 
+#[cfg(feature = "ocl")]
+extern crate ocl;
+
 pub mod error;
 
 pub mod zero;
@@ -21,3 +24,4 @@ pub mod direct;
 
 pub mod multi;
 pub use multi::MultiWaveformRenderer;
+
