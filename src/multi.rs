@@ -170,4 +170,18 @@ mod tests {
         mwr.render_vec(TimeRange::Seconds(0f64, 1f64), (1000, 100))
             .unwrap();
     }
+
+    #[test]
+    fn markers() {
+        let c = Color::Scalar(0);
+        let config = WaveformConfig::new(-1f64, 1f64, c, c).unwrap();
+        let wfr = MultiWaveformRenderer::new(
+            &SampleSequence {
+                data: &vec![0f64; 100],
+                sample_rate: 44100f64,
+            },
+            &vec![10usize], config
+        ).unwrap();
+        let _test: &(Sync+Send) = &wfr;
+    }
 }

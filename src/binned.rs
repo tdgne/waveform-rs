@@ -43,7 +43,7 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
             }));
         }
 
-        let nb_bins = nb_samples / bin_size;
+        let nb_bins = (nb_samples as f64 / bin_size as f64).ceil() as usize;
 
         for x in 0..nb_bins {
             let mut min = samples.data[x * bin_size + 0];
@@ -351,5 +351,19 @@ mod tests {
         wfr.render_write(tr, (0, 0), (width, height), &mut v2[..], (width, height)).unwrap();
 
         assert_eq!(v1, v2);
+    }
+
+    #[test]
+    fn markers() {
+        let c = Color::Scalar(0);
+        let config = WaveformConfig::new(-1f64, 1f64, c, c).unwrap();
+        let wfr = BinnedWaveformRenderer::new(
+            &SampleSequence {
+                data: &vec![0f64; 10],
+                sample_rate: 44100f64,
+            },
+            10, config
+        ).unwrap();
+        let _test: &(Sync+Send) = &wfr;
     }
 }
