@@ -5,10 +5,12 @@ use std::error::Error;
 /// Color specifiers.
 #[derive(Copy, Clone)]
 pub enum Color {
-    /// RGBA format.
-    RGBA { r: u8, g: u8, b: u8, a: u8 },
     /// A format with only one value per pixel, or gray scale in other words.
     Scalar(u8),
+    /// 3-dimensional format (e.g. RGB format).
+    Vector3(u8, u8, u8),
+    /// 4-dimensional format (e.g. RGBA format).
+    Vector4(u8, u8, u8, u8),
 }
 
 /// Configurations for image generators.
@@ -29,18 +31,29 @@ impl WaveformConfig {
     fn check_color_consistency(c1: Color, c2: Color) -> Result<(), Box<InconsistentFormatError>> {
         let mut c1_is_scalar = false;
         let mut c2_is_scalar = false;
-        if let Color::Scalar(_) = c1 {
-            c1_is_scalar = true;
+        match c1 {
+            Color::Scalar(_) => {
+                if let Color::Scalar(_) = c2 {
+                    return Ok(());
+                }else{
+                    return Err(Box::new(InconsistentFormatError));
+                }
+            },
+            Color::Vector3(..) => {
+                if let Color::Vector3(..) = c2 {
+                    return Ok(());
+                }else{
+                    return Err(Box::new(InconsistentFormatError));
+                }
+            },
+            Color::Vector4(..) => {
+                if let Color::Vector4(..) = c2 {
+                    return Ok(());
+                }else{
+                    return Err(Box::new(InconsistentFormatError));
+                }
+            },
         }
-        if let Color::Scalar(_) = c2 {
-            c2_is_scalar = true;
-        }
-
-        if c1_is_scalar ^ c2_is_scalar {
-            return Err(Box::new(InconsistentFormatError));
-        }
-
-        Ok(())
     }
 
     /// The constructor.

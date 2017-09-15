@@ -58,20 +58,10 @@ fn main() {
         1f64, // Maximum amplitude to show
 
         // Foreground color
-        Color::RGBA {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 255,
-        },
+        Color::Vector4(0, 0, 0, 255),
 
         // Background color
-        Color::RGBA {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 0,
-        }
+        Color::Vector4(0, 0, 0, 0)
     ).unwrap();
 
     // Put a reference to the samples here along with its sample rate.

@@ -90,8 +90,9 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
 
 
         let mut img = match self.config.get_background() {
-            Color::RGBA{..} => vec![0u8; w * h * 4],
             Color::Scalar(_) => vec![0u8; w * h],
+            Color::Vector3{..} => vec![0u8; w * h * 3],
+            Color::Vector4{..} => vec![0u8; w * h * 4],
         };
         
         self.render_write(range, (0, 0), shape, &mut img[..], shape).unwrap();
@@ -136,16 +137,21 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
 
         // Check if we have enough bytes in `img`
         match self.config.get_background() {
-            Color::RGBA{..} => {
-                if (offx + w) * (offy + h) * 4 > img.len() {
-                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
-                }
-            },
             Color::Scalar(_) => {
                 if (offx + w) * (offy + h) > img.len() {
                     return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
                 }
-            }
+            },
+            Color::Vector3{..} => {
+                if (offx + w) * (offy + h) * 3 > img.len() {
+                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
+                }
+            },
+            Color::Vector4{..} => {
+                if (offx + w) * (offy + h) * 4 > img.len() {
+                    return Err(Box::new(InvalidSizeError{var_name: "offsets and/or shape".to_string()}));
+                }
+            },
         }
 
         let (begin, end) = match range {
@@ -216,19 +222,74 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
 
             // Putting this `match` outside for loops improved the speed.
             match (self.config.get_background(), self.config.get_foreground()) {
+                (Color::Scalar(ba), Color::Scalar(fa)) => {
+                    flipping_three_segment_for!{
+                                for y in 0, max_translated, min_translated, h, {
+                                    pixel!(img[fullw, fullh; offx+x, offy+y]) = ba,
+                                    pixel!(img[fullw, fullh; offx+x, offy+y]) = fa
+                                }
+                            }
+                },
+
                 (
-                    Color::RGBA {
-                        r: br,
-                        g: bg,
-                        b: bb,
-                        a: ba,
-                    },
-                    Color::RGBA {
-                        r: fr,
-                        g: fg,
-                        b: fb,
-                        a: fa,
-                    },
+                    Color::Vector3 (br, bg, bb),
+                    Color::Vector3 (fr, fg, fb),
+                ) => {
+                    // Order the RGB values so we can directly
+                    // copy them into the image.
+                    let bg_colors: [u8; 3] = [br, bg, bb];
+                    let fg_colors: [u8; 3] = [fr, fg, fb];
+
+                    // Each `flipping_three_segment_for` macro
+                    // will be expanded into three for loops below.
+                    //
+                    // I could have used just one for loop (and I did once)
+                    // but this made a significant difference in
+                    // the performance.
+                    //
+                    // The `pixel` macro is used to access pixels.
+                    //
+                    // See src/macros/*.rs for the defenitions.
+
+
+                    #[cfg(feature = "rlibc")]
+                    unsafe {
+                        flipping_three_segment_for!{
+                                for y in 0, max_translated, min_translated, h, {
+                                        rlibc::memcpy(
+                                            &mut pixel!(img[fullw, fullh, 3; offx+x, offy+y, 0]) as _,
+                                            &bg_colors[0] as _,
+                                            3
+                                            ),
+                                        rlibc::memcpy(
+                                            &mut pixel!(img[fullw, fullh, 3; offx+x, offy+y, 0]) as _,
+                                            &fg_colors[0] as _,
+                                            3
+                                            )
+                                }
+                            }
+                    }
+
+                    // A similar implementation is possible without
+                    // the rlibc crate, but it appeared to be
+                    // slightly slower.
+                    #[cfg(not(feature = "rlibc"))]
+                    {
+                        flipping_three_segment_for!{
+                                for y in 0, max_translated, min_translated, h, {
+                                    (&mut pixel!(img[fullw, fullh, 3; offx+x, offy+y, 0 => 4]))
+                                        .write(&bg_colors).unwrap(),
+                                    (&mut pixel!(img[fullw, fullh, 3; offx+x, offy+y, 0 => 4]))
+                                        .write(&fg_colors).unwrap()
+                                }
+                            }
+                    }
+
+                },
+
+                (
+                    Color::Vector4 (br, bg, bb, ba),
+                    Color::Vector4 (fr, fg, fb, fa),
                 ) => {
 
                     // Order the RGBA values so we can directly
@@ -282,15 +343,6 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                     }
                 },
 
-                (Color::Scalar(ba), Color::Scalar(fa)) => {
-                    flipping_three_segment_for!{
-                                for y in 0, max_translated, min_translated, h, {
-                                    pixel!(img[fullw, fullh; offx+x, offy+y]) = ba,
-                                    pixel!(img[fullw, fullh; offx+x, offy+y]) = fa
-                                }
-                            }
-                },
-
                 // This case is unreachable because inconsistent
                 // `Color` formats are checked whenever a user
                 // creates a `WaveformConfig`.
@@ -325,12 +377,8 @@ mod tests {
         let config = WaveformConfig::new(
             -1f64,
             1f64,
-            Color::RGBA {
-                r: 0, g: 0, b: 0, a: 255,
-            },
-            Color::RGBA {
-                r: 0, g: 0, b: 0, a: 255,
-            },
+            Color::Vector4(0, 0, 0, 255),
+            Color::Vector4(0, 0, 0, 255)
             ).unwrap();
         let wfr = BinnedWaveformRenderer::new(
             &SampleSequence {

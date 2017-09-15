@@ -146,18 +146,8 @@ mod tests {
             data: &data[..],
             sample_rate,
         };
-        let foreground = Color::RGBA {
-            r: 255,
-            g: 0,
-            b: 0,
-            a: 255,
-        };
-        let background = Color::RGBA {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 0,
-        };
+        let foreground = Color::Vector4(255, 0, 0, 255);
+        let background = Color::Vector4(0, 0, 0, 0);
         let config = WaveformConfig::new(-100f64, 100f64, foreground, background).unwrap();
         let bss = vec![10, 50, 100];
         let mut mwr = MultiWaveformRenderer::new(&ss, &bss, config).unwrap();

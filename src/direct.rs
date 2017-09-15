@@ -54,19 +54,20 @@ impl DirectWaveformRenderer {
         // I've also tried it in BinnedWaveformRenderer but it didn't make a
         // significant improvement in speed, so it's left that way.
         match (self.config.get_background(), self.config.get_foreground()) {
+            (Color::Scalar(ba), Color::Scalar(fa)) => for y in 0..h {
+                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
+                for x in 0..w {
+                    if y_translated < minmax.data[x].min.into() || y_translated > minmax.data[x].max.into() {
+                        img[1 * (y * w + x) + 0] = ba;
+                    } else {
+                        img[1 * (y * w + x) + 0] = fa;
+                    }
+                }
+            },
+
             (
-                Color::RGBA {
-                    r: br,
-                    g: bg,
-                    b: bb,
-                    a: ba,
-                },
-                Color::RGBA {
-                    r: fr,
-                    g: fg,
-                    b: fb,
-                    a: fa,
-                },
+                Color::Vector4(br, bg, bb, ba),
+                Color::Vector4(fr, fg, fb, fa),
             ) => for y in 0..h {
                 let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
                 for x in 0..w {
@@ -83,16 +84,7 @@ impl DirectWaveformRenderer {
                     }
                 }
             },
-            (Color::Scalar(ba), Color::Scalar(fa)) => for y in 0..h {
-                let y_translated = ((h - y) as f64) / (h as f64) * (self.config.amp_max - self.config.amp_min) + self.config.amp_min;
-                for x in 0..w {
-                    if y_translated < minmax.data[x].min.into() || y_translated > minmax.data[x].max.into() {
-                        img[1 * (y * w + x) + 0] = ba;
-                    } else {
-                        img[1 * (y * w + x) + 0] = fa;
-                    }
-                }
-            },
+            
             _ => {
                 panic!("Color formats of background and foreground are inconsistent!");
             }
