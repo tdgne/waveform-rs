@@ -164,14 +164,10 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
         let offset_bin_idx = begin / self.bin_size;
         let mut start_bin_idx = offset_bin_idx;
         for x in 0..w {
-            let inc = if x == 0 {
-                bins_per_pixel_floor
+            let inc = if ((start_bin_idx - offset_bin_idx) as f64 + 1f64) / (x as f64) < bins_per_pixel {
+                bins_per_pixel_ceil
             } else {
-                if ((start_bin_idx - offset_bin_idx) as f64 + 1f64) / (x as f64) < bins_per_pixel {
-                    bins_per_pixel_ceil
-                } else {
-                    bins_per_pixel_floor
-                }
+                bins_per_pixel_floor
             };
 
             let mut min: T;
@@ -284,7 +280,8 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                                 }
                             }
                     }
-                }
+                },
+
                 (Color::Scalar(ba), Color::Scalar(fa)) => {
                     flipping_three_segment_for!{
                                 for y in 0, max_translated, min_translated, h, {
@@ -292,7 +289,7 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                                     pixel!(img[fullw, fullh; offx+x, offy+y]) = fa
                                 }
                             }
-                }
+                },
 
                 // This case is unreachable because inconsistent
                 // `Color` formats are checked whenever a user
