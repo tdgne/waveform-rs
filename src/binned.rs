@@ -207,18 +207,18 @@ impl<T: Sample> BinnedWaveformRenderer<T> {
                 cmp::max(
                     0,
                     cmp::min(
-                        h,
-                        ((min.into() - self.config.amp_min) * scale).floor() as usize,
+                        h as i32,
+                        ((min.into() - self.config.amp_min) * scale).floor() as i32,
                     ),
-                );
+                ) as usize;
             let max_translated: usize = h -
                 cmp::max(
                     0,
                     cmp::min(
-                        h,
-                        ((max.into() - self.config.amp_min) * scale).floor() as usize,
+                        h as i32,
+                        ((max.into() - self.config.amp_min) * scale).floor() as i32,
                     ),
-                );
+                ) as usize;
 
             // Putting this `match` outside for loops improved the speed.
             match (self.config.get_background(), self.config.get_foreground()) {
