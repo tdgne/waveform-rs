@@ -9,7 +9,7 @@ It is speed-oriented for heavy use.
 ## Features
 
 * Generation of bicolored raster images (outputs are either returned as `Vec<u8>`s or written into a slice)
-  * `RGBA` format images
+  * RGB (`Vector3`) or RGBA (`Vector4`) format images
   * Gray scale (`Scalar`) images for use as masks etc.
 * Fast rendering from binned min/max amplitudes
 * Multilevel binning for rendering in various resolutions
