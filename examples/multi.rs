@@ -76,7 +76,7 @@ fn main() {
     // The second argument is a `&Vec<usize>` containing the bin sizes.
     // `MultiWaveformRenderer` will generate a `BinnedWaveformRenderer` for
     // each bin size.
-    let mut wfg = MultiWaveformRenderer::new(&ss, &vec![10, 100, 1000], config).unwrap();
+    let mut wfg = MultiWaveformRenderer::new(&ss, &[10, 100, 1000], config).unwrap();
 
     // Render!
     // Each time `MultiWaveformRenderer` will choose the appropriate bin size.

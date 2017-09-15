@@ -27,12 +27,15 @@ impl<T: Sample> MultiWaveformRenderer<T> {
     /// * `bin_sizes` - The sizes of the bins which the min / max values will be binned
     ///                into.
     /// * `config` - See `WaveformConfig`.
-    pub fn new(samples: &SampleSequence<T>, bin_sizes: &Vec<usize>, config: WaveformConfig) -> Result<Self, Box<Error>> {
+    pub fn new(samples: &SampleSequence<T>, bin_sizes: &[usize], config: WaveformConfig) -> Result<Self, Box<Error>> {
         let mut r = MultiWaveformRenderer {
             binned: HashMap::new(),
             sample_rate: samples.sample_rate,
         };
-        let mut bss = bin_sizes.clone();
+        let mut bss = Vec::with_capacity(bin_sizes.len());
+        for bs in bin_sizes {
+            bss.push(*bs);
+        }
         bss.sort();
 
         // TODO: This is obviously improvable if we use the 
