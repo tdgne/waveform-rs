@@ -29,8 +29,6 @@ pub struct WaveformConfig {
 
 impl WaveformConfig {
     fn check_color_consistency(c1: Color, c2: Color) -> Result<(), Box<InconsistentFormatError>> {
-        let mut c1_is_scalar = false;
-        let mut c2_is_scalar = false;
         match c1 {
             Color::Scalar(_) => {
                 if let Color::Scalar(_) = c2 {
