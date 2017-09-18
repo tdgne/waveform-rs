@@ -20,18 +20,8 @@ fn gen_config() -> WaveformConfig {
     WaveformConfig::new(
         -1f64,
         1f64,
-        Color::RGBA {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 255,
-        },
-        Color::RGBA {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 0,
-        },
+        Color::Vector4(0, 0, 0, 255),
+        Color::Vector4(0, 0, 0, 0),
     ).unwrap()
 }
 
